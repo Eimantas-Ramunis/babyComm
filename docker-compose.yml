@@ -1,0 +1,23 @@
+# Minimal starting point for deploying the backend (Phase 1).
+# Phase 7 will flesh this out with the built client, an HTTPS reverse proxy
+# (Traefik/Caddy), and DuckDNS. For now this just runs the Express server.
+
+services:
+  server:
+    image: node:22-alpine
+    working_dir: /app/server
+    command: sh -c "npm install --omit=dev && npm start"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/server/data/app.sqlite
+      # Set ADMIN_PASSWORD via an .env file or your orchestrator's secrets.
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change-me}
+    volumes:
+      - ./server:/app/server
+      - server-data:/app/server/data
+    ports:
+      - "3000:3000"
+
+volumes:
+  server-data:
