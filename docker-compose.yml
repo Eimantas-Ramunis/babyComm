@@ -35,14 +35,16 @@ services:
     ports:
       - "${APP_PORT:-3001}:3000"
 
-  # OPTIONAL bundled HTTPS. Enable with a stack env var: COMPOSE_PROFILES=caddy
-  # Publishes ONLY 443 (port 80 is often taken on a Pi, e.g. by Pi-hole's lighttpd). Caddy still
-  # gets the Let's Encrypt cert over 443 via the TLS-ALPN-01 challenge, so it never touches 80.
-  # Forward port 443 (TCP) from your router to the Pi.
+  # Bundled HTTPS. Publishes ONLY 443 (port 80 is often taken on a Pi, e.g. by Pi-hole's
+  # lighttpd). Caddy gets the Let's Encrypt cert over 443 via the TLS-ALPN-01 challenge, so it
+  # never touches 80. Forward port 443 (TCP) from your router to the Pi.
+  #
+  # Don't want bundled HTTPS (you have your own reverse proxy)? Delete this whole `caddy:` service
+  # and point your proxy at http://<pi>:${APP_PORT}. (Profiles are intentionally NOT used here —
+  # Portainer doesn't activate them reliably.)
   caddy:
     image: caddy:2
     restart: unless-stopped
-    profiles: ["caddy"]
     depends_on:
       - app
     ports:
