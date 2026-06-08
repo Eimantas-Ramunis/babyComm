@@ -11,9 +11,10 @@ import { generateMessage } from './aiTextService.js';
 import { generateImage } from './aiImageService.js';
 import { todayInTimezone } from '../utils/dateUtils.js';
 import { cardsUploadDir, cardImageUrl } from '../utils/paths.js';
+import { logger } from '../utils/logger.js';
 
 const FALLBACK_MESSAGE =
-  'Hi mom. I am growing a little more today. Dad says I am already extremely impressive.';
+  'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdingas.';
 
 function getCardByDate(date) {
   return db.prepare('SELECT * FROM daily_cards WHERE card_date = ?').get(date);
@@ -28,10 +29,10 @@ function buildFallbackContent(date, settings) {
     gestational_day: status.gestationalDay,
     size_label: status.sizeLabel,
     development_fact: status.developmentFact,
-    title: `Week ${status.gestationalWeek}`,
-    short_notification: `Hey mom, today I am about the size of a ${status.sizeLabel}. 💛`,
+    title: `${status.gestationalWeek} savaitė`,
+    short_notification: `Labas mama, šiandien esu maždaug ${status.sizeLabel} dydžio. 💛`,
     homepage_message: FALLBACK_MESSAGE,
-    mood: 'cozy',
+    mood: 'jaukus',
     image_url: null,
     image_prompt: null,
     generation_status: 'fallback',
@@ -156,9 +157,10 @@ export async function generateMessageForDate(date, settings = getSettings()) {
   const status = getPregnancyStatus(settings, date);
   try {
     const message = await generateMessage(buildAiTextContext(settings, status));
+    logger.info(`AI message generated for ${date}.`);
     return upsertCard(buildAiCardContent(date, status, message), { resetImage: false });
   } catch (err) {
-    console.error(`AI text generation failed for ${date}, using fallback:`, err.message);
+    logger.error(`AI text generation failed for ${date}, using fallback: ${err.message}`);
     // Keep an existing card untouched on failure; only create a fallback if none exists.
     return getCardByDate(date) ?? createFallbackCard(date, settings);
   }
@@ -183,7 +185,8 @@ export async function generateImageForDate(date, settings = getSettings()) {
       personality: settings.personality,
     });
     fs.mkdirSync(cardsUploadDir, { recursive: true });
-    fs.writeFileSync(`${cardsUploadDir}/${date}.png`, buffer);
+    const filePath = `${cardsUploadDir}/${date}.png`;
+    fs.writeFileSync(filePath, buffer);
 
     const now = new Date().toISOString();
     db.prepare('UPDATE daily_cards SET image_url = ?, updated_at = ? WHERE card_date = ?').run(
@@ -191,8 +194,9 @@ export async function generateImageForDate(date, settings = getSettings()) {
       now,
       date,
     );
+    logger.info(`AI image saved for ${date}: ${filePath} (${buffer.length} bytes)`);
   } catch (err) {
-    console.error(`AI image generation failed for ${date}:`, err.message);
+    logger.error(`AI image generation failed for ${date}: ${err.message}`);
   }
   return getCardByDate(date);
 }

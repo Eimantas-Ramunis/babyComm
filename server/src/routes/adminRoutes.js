@@ -139,7 +139,7 @@ router.post('/notifications/test', async (req, res, next) => {
     const settings = getSettings();
     const summary = await sendToAllActiveDevices({
       title: settings.baby_nickname,
-      body: 'Test notification — hi mom! 💛',
+      body: 'Bandomasis pranešimas — labas, mama! 💛',
       url: '/',
     });
     res.json({ ok: true, ...summary });

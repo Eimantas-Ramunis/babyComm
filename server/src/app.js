@@ -13,6 +13,7 @@ import cors from 'cors';
 import { runMigrations } from './db/migrations.js';
 import { ensureVapidKeys } from './services/pushService.js';
 import { uploadsDir } from './utils/paths.js';
+import { logger } from './utils/logger.js';
 import publicRoutes from './routes/publicRoutes.js';
 import pushRoutes from './routes/pushRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -58,7 +59,7 @@ export function createApp() {
   // Centralized JSON error handler.
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    console.error(err);
+    logger.error(`Unhandled error on ${req.method} ${req.originalUrl}:`, err);
     res.status(500).json({ error: 'Internal server error' });
   });
 

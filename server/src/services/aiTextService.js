@@ -3,6 +3,8 @@
 // Backend-only: the API key never reaches the frontend. Any failure throws so the caller
 // (cardService) falls back to the canned message — the homepage must never depend on AI.
 
+import { logger } from '../utils/logger.js';
+
 const DEFAULT_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_NOTIFICATION_CHARS = 120;
@@ -84,9 +86,11 @@ Return ONLY valid JSON with this structure:
 }
 
 Rules:
+- Write ALL text values (title, shortNotification, homepageMessage, mood) in LITHUANIAN.
+  Use natural, warm, grammatically correct Lithuanian. Keep the JSON keys in English.
 - shortNotification max ${MAX_NOTIFICATION_CHARS} characters.
 - homepageMessage should be 2-5 sentences.
-- Write as if the baby is speaking directly to mom.
+- Write as if the baby is speaking directly to mom ("mama").
 - Do not include markdown.
 - Keep it personal, cozy, and memorable.`;
 }
@@ -98,6 +102,7 @@ Rules:
 export async function generateMessage(ctx) {
   if (!ctx.apiKey) throw new Error('No Gemini API key configured.');
   const model = ctx.model || DEFAULT_TEXT_MODEL;
+  logger.debug(`Gemini text request: model=${model}`);
 
   const res = await fetch(`${GEMINI_BASE}/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
@@ -111,12 +116,15 @@ export async function generateMessage(ctx) {
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
+    logger.error(`Gemini text request failed (${res.status}): ${detail.slice(0, 300)}`);
     throw new Error(`Gemini text request failed (${res.status}): ${detail.slice(0, 200)}`);
   }
 
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '';
-  return validateMessage(parseAiJson(text));
+  const message = validateMessage(parseAiJson(text));
+  logger.debug(`Gemini text ok: "${message.title}"`);
+  return message;
 }
 
 export { DEFAULT_TEXT_MODEL };

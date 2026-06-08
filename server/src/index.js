@@ -12,11 +12,12 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const { createApp } = await import('./app.js');
 const { startScheduler } = await import('./services/schedulerService.js');
+const { logger } = await import('./utils/logger.js');
 
 const PORT = process.env.PORT || 3000;
 const app = createApp();
 
 app.listen(PORT, () => {
-  console.log(`Baby Growth PWA server listening on http://localhost:${PORT}`);
+  logger.info(`Baby Growth PWA server listening on http://localhost:${PORT}`);
   startScheduler();
 });

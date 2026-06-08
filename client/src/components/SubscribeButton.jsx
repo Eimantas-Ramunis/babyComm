@@ -30,17 +30,17 @@ export default function SubscribeButton() {
   return (
     <section className="card subscribe-card">
       {state === 'subscribed' ? (
-        <p className="subscribe-card__ok">🔔 You’re getting baby updates on this device.</p>
+        <p className="subscribe-card__ok">🔔 Gauni mažylio naujienas šiame įrenginyje.</p>
       ) : state === 'denied' ? (
         <p className="muted">
-          Notifications are blocked for this site. Enable them in your browser settings to get baby
-          updates.
+          Pranešimai šiai svetainei užblokuoti. Įjunk juos naršyklės nustatymuose, kad gautum
+          mažylio naujienas.
         </p>
       ) : (
         <>
-          <p className="subscribe-card__text">Want little notes from me, mom?</p>
+          <p className="subscribe-card__text">Nori mažų žinučių nuo manęs, mama?</p>
           <button type="button" className="btn btn--primary" onClick={handleSubscribe} disabled={busy}>
-            {busy ? 'Turning on…' : 'Turn on baby updates 💛'}
+            {busy ? 'Įjungiama…' : 'Įjungti mažylio naujienas 💛'}
           </button>
         </>
       )}

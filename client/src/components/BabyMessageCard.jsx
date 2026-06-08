@@ -17,8 +17,8 @@ export default function BabyMessageCard({ today }) {
         {title && <h3 className="message-card__title">{title}</h3>}
         <p className="message-card__text">“{homepageMessage}”</p>
         <div className="message-card__footer">
-          {mood && <span className="chip">mood: {mood}</span>}
-          {sizeLabel && <span className="chip">size: {sizeLabel}</span>}
+          {mood && <span className="chip">nuotaika: {mood}</span>}
+          {sizeLabel && <span className="chip">dydis: {sizeLabel}</span>}
         </div>
       </div>
     </section>

@@ -32,10 +32,20 @@ function urlBase64ToUint8Array(base64String) {
 export async function subscribe(deviceName) {
   if (!isPushSupported()) throw new Error('Push notifications are not supported on this device.');
 
+  console.log('[push] requesting notification permission…');
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Notification permission was not granted.');
 
-  const reg = await navigator.serviceWorker.ready;
+  console.log('[push] waiting for the service worker to be ready…');
+  // Guard against a missing/unregistered SW hanging forever on serviceWorker.ready.
+  const reg = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Service worker not ready (is it registered?)')), 10000),
+    ),
+  ]);
+
+  console.log('[push] fetching VAPID public key…');
   const { publicKey } = await getVapidPublicKey();
 
   const subscription =
@@ -44,6 +54,7 @@ export async function subscribe(deviceName) {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     }));
+  console.log('[push] subscription obtained, registering with server…');
 
   await registerPush({
     subscription: subscription.toJSON(),
@@ -51,6 +62,7 @@ export async function subscribe(deviceName) {
     userAgent: navigator.userAgent,
   });
 
+  console.log('[push] device registered ✓');
   return true;
 }
 

@@ -15,6 +15,12 @@ export default defineConfig({
         // App is small; allow precaching the JS bundle comfortably.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
+      // Serve + register the service worker during `npm run dev` too, so push subscription
+      // (which needs an active SW) can be tested locally without a production build.
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
         name: 'Tiny Bean Updates',

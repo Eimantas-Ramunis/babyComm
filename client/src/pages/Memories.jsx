@@ -11,16 +11,16 @@ export default function Memories() {
       .catch((e) => setError(e.message));
   }, []);
 
-  if (error) return <p className="status status--error">Could not load memories: {error}</p>;
-  if (!memories) return <p className="status">Loading memories…</p>;
+  if (error) return <p className="status status--error">Nepavyko įkelti prisiminimų: {error}</p>;
+  if (!memories) return <p className="status">Kraunami prisiminimai…</p>;
 
   if (memories.length === 0) {
     return (
       <div className="stack">
-        <h2 className="page-title">Memory capsule</h2>
+        <h2 className="page-title">Prisiminimų skrynelė</h2>
         <p className="status">
-          No memories yet. Dad can add special moments here — first heartbeat, funny cravings,
-          little notes. 💛
+          Kol kas prisiminimų nėra. Tėtis čia gali įrašyti ypatingas akimirkas — pirmąjį širdies
+          dūžį, juokingus užgaidus, mažas žinutes. 💛
         </p>
       </div>
     );
@@ -28,7 +28,7 @@ export default function Memories() {
 
   return (
     <div className="stack">
-      <h2 className="page-title">Memory capsule</h2>
+      <h2 className="page-title">Prisiminimų skrynelė</h2>
       <ol className="timeline">
         {memories.map((m) => (
           <li key={m.id} className="timeline__item card">

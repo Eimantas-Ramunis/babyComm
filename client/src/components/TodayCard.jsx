@@ -15,23 +15,23 @@ export default function TodayCard({ today }) {
   return (
     <section className="card today-card">
       <div className="today-card__badge">
-        <span className="badge-week">Week {gestationalWeek}</span>
-        <span className="badge-day">+ {gestationalDay} days</span>
+        <span className="badge-week">{gestationalWeek} savaitė</span>
+        <span className="badge-day">+ {gestationalDay} d.</span>
       </div>
 
       <h2 className="today-card__name">{babyNickname}</h2>
 
       <p className="today-card__size">
-        Today I am roughly the size of a <strong>{sizeLabel}</strong>.
+        Šiandien esu maždaug <strong>{sizeLabel}</strong> dydžio.
       </p>
 
       {developmentFact && <p className="today-card__fact">{developmentFact}</p>}
 
       <div className="today-card__meta">
-        <Meta label="Trimester" value={ordinal(trimester)} />
+        <Meta label="Trimestras" value={ordinal(trimester)} />
         <Meta
-          label={isDueDatePassed ? 'Past due by' : 'Days until due'}
-          value={`${Math.abs(daysRemaining)} days`}
+          label={isDueDatePassed ? 'Vėluoja' : 'Dienų iki termino'}
+          value={`${Math.abs(daysRemaining)} d.`}
         />
       </div>
     </section>
@@ -48,5 +48,5 @@ function Meta({ label, value }) {
 }
 
 function ordinal(n) {
-  return ['0th', '1st', '2nd', '3rd'][n] || `${n}th`;
+  return ['—', '1-as', '2-as', '3-as'][n] || `${n}-as`;
 }

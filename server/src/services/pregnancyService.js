@@ -7,24 +7,24 @@ import { addDays, daysBetween } from '../utils/dateUtils.js';
 
 const GESTATION_DAYS = 280; // standard 40-week estimate
 
-// Size + development fact by gestational week (warm, non-clinical).
+// Size + development fact by gestational week, in Lithuanian (warm, non-clinical).
 export const SIZE_BY_WEEK = {
-  6: { sizeLabel: 'sweet pea', developmentFact: 'Tiny facial features are starting to form.' },
-  7: { sizeLabel: 'blueberry', developmentFact: 'Tiny arm and leg buds are growing.' },
-  8: { sizeLabel: 'raspberry', developmentFact: 'Little fingers and toes are beginning to form.' },
-  9: { sizeLabel: 'grape', developmentFact: 'Tiny muscles are starting to develop.' },
-  10: { sizeLabel: 'strawberry', developmentFact: 'Little joints are forming.' },
-  11: { sizeLabel: 'fig', developmentFact: 'The baby is starting to look more recognizably baby-like.' },
-  12: { sizeLabel: 'lime', developmentFact: 'Reflexes are beginning to develop.' },
-  13: { sizeLabel: 'lemon', developmentFact: 'Tiny fingerprints may be forming.' },
-  14: { sizeLabel: 'peach', developmentFact: 'The baby is growing more coordinated.' },
-  15: { sizeLabel: 'apple', developmentFact: 'The baby may be practicing little movements.' },
-  16: { sizeLabel: 'avocado', developmentFact: 'Tiny facial expressions may be developing.' },
+  6: { sizeLabel: 'žirnelio', developmentFact: 'Pradeda ryškėti maži veiduko bruožai.' },
+  7: { sizeLabel: 'mėlynės', developmentFact: 'Auga mažytės rankų ir kojų užuomazgos.' },
+  8: { sizeLabel: 'avietės', developmentFact: 'Pradeda formuotis maži pirščiukai.' },
+  9: { sizeLabel: 'vynuogės', developmentFact: 'Pradeda vystytis maži raumenėliai.' },
+  10: { sizeLabel: 'braškės', developmentFact: 'Formuojasi maži sąnariukai.' },
+  11: { sizeLabel: 'figos', developmentFact: 'Vis labiau panašėju į tikrą kūdikį.' },
+  12: { sizeLabel: 'laimo', developmentFact: 'Pradeda formuotis pirmieji refleksai.' },
+  13: { sizeLabel: 'citrinos', developmentFact: 'Gali ryškėti maži pirštų atspaudai.' },
+  14: { sizeLabel: 'persiko', developmentFact: 'Tampu vis judresnis ir koordinuotas.' },
+  15: { sizeLabel: 'obuolio', developmentFact: 'Galbūt mokausi mažų judesių.' },
+  16: { sizeLabel: 'avokado', developmentFact: 'Gali ryškėti mažos veido išraiškos.' },
 };
 
 const FALLBACK_SIZE = {
-  sizeLabel: 'tiny seedling',
-  developmentFact: 'The baby is growing a little more every day.',
+  sizeLabel: 'mažo daigelio',
+  developmentFact: 'Kiekvieną dieną po truputį augu.',
 };
 
 /** Look up size/fact for a week, with a safe fallback for missing weeks. */

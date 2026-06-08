@@ -5,17 +5,17 @@ import Memories from './pages/Memories.jsx';
 import Admin from './pages/Admin.jsx';
 
 const NAV = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/history', label: 'History' },
-  { to: '/memories', label: 'Memories' },
-  { to: '/admin', label: 'Admin' },
+  { to: '/', label: 'Pradžia', end: true },
+  { to: '/history', label: 'Istorija' },
+  { to: '/memories', label: 'Prisiminimai' },
+  { to: '/admin', label: 'Administravimas' },
 ];
 
 export default function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1 className="app-title">🌱 Tiny Bean Updates</h1>
+        <h1 className="app-title">🌱 Mažylio naujienos</h1>
         <nav className="app-nav">
           {NAV.map((item) => (
             <NavLink
@@ -39,7 +39,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="app-footer">Made with love, before you arrive. 💛</footer>
+      <footer className="app-footer">Sukurta su meile, dar prieš tau atvykstant. 💛</footer>
     </div>
   );
 }

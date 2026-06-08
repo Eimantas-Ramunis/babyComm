@@ -11,6 +11,7 @@ import { getPregnancyStatus } from './pregnancyService.js';
 import { getOrCreateTodayCard } from './cardService.js';
 import { sendToAllActiveDevices } from './pushService.js';
 import { nowPartsInTimezone } from '../utils/dateUtils.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Decide whether a schedule should fire right now. PURE and timezone-agnostic — all
@@ -84,6 +85,7 @@ export async function runDueSchedules(now = new Date()) {
 
     if (!shouldRunSchedule(schedule, nowParts)) continue;
 
+    logger.info(`Scheduler firing schedule id=${schedule.id} "${schedule.name}" at ${parts.time}`);
     const card = getOrCreateTodayCard(); // text-only/fast; never blocks on image generation
     await sendToAllActiveDevices({
       title: settings.baby_nickname,
@@ -94,6 +96,7 @@ export async function runDueSchedules(now = new Date()) {
     fired.push(schedule.id);
   }
 
+  if (fired.length) logger.debug(`Scheduler fired: ${fired.join(', ')}`);
   return { fired };
 }
 
@@ -102,9 +105,9 @@ let task = null;
 export function startScheduler() {
   if (task) return; // idempotent
   task = cron.schedule('* * * * *', () => {
-    runDueSchedules().catch((err) => console.error('Scheduler tick failed:', err));
+    runDueSchedules().catch((err) => logger.error('Scheduler tick failed:', err));
   });
-  console.log('Notification scheduler started (every minute).');
+  logger.info('Notification scheduler started (every minute).');
 }
 
 export function stopScheduler() {

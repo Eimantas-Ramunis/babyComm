@@ -9,6 +9,7 @@ import webpush from 'web-push';
 import db from '../db/database.js';
 import { getConfig, setConfig } from './configService.js';
 import { serializeDevice } from '../utils/serializers.js';
+import { logger } from '../utils/logger.js';
 
 let vapidPublicKey = null;
 
@@ -38,11 +39,12 @@ export function ensureVapidKeys() {
     privateKey = generated.privateKey;
     setConfig('vapid_public_key', publicKey);
     setConfig('vapid_private_key', privateKey);
-    console.log('Generated and persisted a new VAPID keypair.');
+    logger.info('Generated and persisted a new VAPID keypair.');
   }
 
   webpush.setVapidDetails(subject, publicKey, privateKey);
   vapidPublicKey = publicKey;
+  logger.debug('VAPID configured. Public key:', publicKey.slice(0, 16) + '…');
 }
 
 export function getVapidPublicKey() {
@@ -77,7 +79,9 @@ export function registerDevice({ subscription, deviceName, userAgent }) {
     now,
   });
 
-  return db.prepare('SELECT * FROM push_devices WHERE endpoint = ?').get(subscription.endpoint);
+  const device = db.prepare('SELECT * FROM push_devices WHERE endpoint = ?').get(subscription.endpoint);
+  logger.info(`Device registered/refreshed: id=${device.id} name=${device.device_name || '(unnamed)'}`);
+  return device;
 }
 
 export function listDevices() {
@@ -121,10 +125,14 @@ export async function sendToDevice(device, payload) {
     const subscription = JSON.parse(device.subscription_json);
     await webpush.sendNotification(subscription, JSON.stringify(payload));
     markSuccess(device.id);
+    logger.debug(`Push sent to device id=${device.id}`);
     return { ok: true, deactivated: false };
   } catch (err) {
     const kind = classifyPushError(err.statusCode);
     markFailure(device.id, { deactivate: kind === 'gone' });
+    logger.warn(
+      `Push to device id=${device.id} failed (status=${err.statusCode}, kind=${kind}): ${err.message}`,
+    );
     return { ok: false, deactivated: kind === 'gone', error: err.message };
   }
 }
@@ -138,10 +146,12 @@ export async function sendToAllActiveDevices(payload) {
       ...(await sendToDevice(device, payload)),
     })),
   );
-  return {
+  const summary = {
     total: devices.length,
     sent: results.filter((r) => r.ok).length,
     failed: results.filter((r) => !r.ok).length,
     results,
   };
+  logger.info(`Push fan-out: ${summary.sent}/${summary.total} sent, ${summary.failed} failed.`);
+  return summary;
 }

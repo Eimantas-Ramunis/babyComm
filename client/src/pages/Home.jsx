@@ -12,13 +12,13 @@ export default function Home() {
     getToday()
       .then((data) => {
         if (data) setToday(data);
-        else setError('No update available.');
+        else setError('Naujienų kol kas nėra.');
       })
       .catch((e) => setError(e.message));
   }, []);
 
-  if (error) return <p className="status status--error">Could not load today: {error}</p>;
-  if (!today) return <p className="status">Loading today’s update…</p>;
+  if (error) return <p className="status status--error">Nepavyko įkelti: {error}</p>;
+  if (!today) return <p className="status">Kraunama šiandienos naujiena…</p>;
 
   return (
     <div className="stack">

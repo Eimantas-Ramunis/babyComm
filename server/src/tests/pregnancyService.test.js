@@ -61,7 +61,7 @@ test('size data falls back safely for out-of-range weeks', () => {
   const fallback = getSizeForWeek(40);
   assert.equal(typeof fallback.sizeLabel, 'string');
   assert.ok(fallback.sizeLabel.length > 0);
-  assert.equal(getSizeForWeek(13).sizeLabel, 'lemon');
+  assert.equal(getSizeForWeek(13).sizeLabel, 'citrinos'); // Lithuanian (genitive: "citrinos dydžio")
 });
 
 test('due-date-passed behavior', () => {
