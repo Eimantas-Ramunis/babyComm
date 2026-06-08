@@ -39,8 +39,9 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // Forward API calls to the Express backend during development.
+      // Forward API calls and generated card images to the Express backend during development.
       '/api': 'http://localhost:3000',
+      '/uploads': 'http://localhost:3000',
     },
   },
 });

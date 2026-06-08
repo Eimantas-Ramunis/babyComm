@@ -2,8 +2,12 @@
 #
 # Services:
 #   app     — the PWA (server serves built client + API on :3000), HTTP only.
-#   caddy   — reverse proxy that terminates HTTPS (auto Let's Encrypt) for your DuckDNS domain.
-#   duckdns — keeps your DuckDNS subdomain pointed at the Pi's current public IP.
+#   caddy   — reverse proxy that terminates HTTPS (auto Let's Encrypt) for your DOMAIN.
+#   duckdns — OPTIONAL DuckDNS updater (only if you use DuckDNS). Behind the "duckdns" profile.
+#
+# DDNS: if your ROUTER updates the DDNS record (e.g. TP-Link tplinkdns.com), you do NOT need the
+#       duckdns service — just `docker compose up -d` (starts app + caddy). For DuckDNS, run
+#       `docker compose --profile duckdns up -d`.
 #
 # Copy .env.compose.example to .env (next to this file) and fill it in. See docs/Deployment.md.
 
@@ -38,19 +42,22 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN=${DOMAIN:?set DOMAIN (your-name.duckdns.org) in .env}
+      - DOMAIN=${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com) in .env}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
 
+  # OPTIONAL — only for DuckDNS users. Start with: docker compose --profile duckdns up -d
+  # TP-Link (tplinkdns.com) users: leave this off; the router updates DDNS itself.
   duckdns:
     image: lscr.io/linuxserver/duckdns:latest
     restart: unless-stopped
+    profiles: ["duckdns"]
     environment:
       - TZ=${TZ:-Europe/Vilnius}
-      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN:?set DUCKDNS_SUBDOMAIN in .env}
-      - TOKEN=${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN in .env}
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN:-}
+      - TOKEN=${DUCKDNS_TOKEN:-}
       - UPDATE_IP=ipv4
 
 volumes:

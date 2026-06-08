@@ -2,9 +2,18 @@
 // Handles offline precaching + Web Push display + notification clicks.
 
 import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { StaleWhileRevalidate } from 'workbox-strategies';
 
 // Injected at build time by vite-plugin-pwa.
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Generated card images live at /uploads/* (not precached). Serve them from cache and refresh
+// in the background, so they load instantly and the router stops logging "no route found".
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/uploads/'),
+  new StaleWhileRevalidate({ cacheName: 'card-images' }),
+);
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
