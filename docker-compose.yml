@@ -9,7 +9,7 @@ services:
     command: sh -c "npm install --omit=dev && npm start"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3001
       - DATABASE_PATH=/app/server/data/app.sqlite
       # Set ADMIN_PASSWORD via an .env file or your orchestrator's secrets.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change-me}
@@ -17,7 +17,7 @@ services:
       - ./server:/app/server
       - server-data:/app/server/data
     ports:
-      - "3000:3000"
+      - "3001:3001"
 
 volumes:
   server-data:
