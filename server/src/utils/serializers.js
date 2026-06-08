@@ -42,6 +42,8 @@ export function serializeSettings(settings) {
     personality: settings.personality,
     tone: settings.tone,
     notificationsEnabled: Boolean(settings.notifications_enabled),
+    autoGenerateEnabled: Boolean(settings.auto_generate_enabled),
+    autoGenerateTime: settings.auto_generate_time,
     geminiTextModel: settings.gemini_text_model,
     geminiImageModel: settings.gemini_image_model,
     // Never expose the raw key. Report only whether it is set + the last 4 chars.

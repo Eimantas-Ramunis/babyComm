@@ -8,10 +8,13 @@ import cron from 'node-cron';
 import db from '../db/database.js';
 import { getSettings } from './settingsService.js';
 import { getPregnancyStatus } from './pregnancyService.js';
-import { getOrCreateTodayCard } from './cardService.js';
+import { getOrCreateTodayCard, generateCardForDate } from './cardService.js';
 import { sendToAllActiveDevices } from './pushService.js';
-import { nowPartsInTimezone } from '../utils/dateUtils.js';
+import { getConfig, setConfig } from './configService.js';
+import { nowPartsInTimezone, addDays } from '../utils/dateUtils.js';
 import { logger } from '../utils/logger.js';
+
+const LAST_PREGEN_KEY = 'last_pregen_date';
 
 /**
  * Decide whether a schedule should fire right now. PURE and timezone-agnostic — all
@@ -100,12 +103,77 @@ export async function runDueSchedules(now = new Date()) {
   return { fired };
 }
 
+/**
+ * Decide whether to pre-generate the next day's card now. PURE/testable.
+ * Runs at-or-after the configured time, once per day (deduped via lastPregenDate), and only
+ * when enabled. `parts.time` and `parts.date` are timezone-local; lastPregenDate is the local
+ * date we last pre-generated on.
+ */
+export function shouldPregenerate(settings, parts, lastPregenDate) {
+  if (!settings.auto_generate_enabled) return false;
+  if (!settings.auto_generate_time) return false;
+  if (parts.time < settings.auto_generate_time) return false; // not yet time today
+  if (lastPregenDate === parts.date) return false; // already done today
+  return true;
+}
+
+let pregenInFlight = false;
+const pregenAttempts = new Map(); // local-date -> attempt count (in-memory; resets on restart)
+const MAX_PREGEN_ATTEMPTS = 5;
+
+/**
+ * Once per day, AI-generate the NEXT day's card (text + image) in advance so it is ready well
+ * before the morning. Independent of the notifications switch; skipped without a Gemini key.
+ *
+ * If the AI text falls back (Gemini hiccup), we do NOT mark the day done, so the next tick
+ * retries — bounded to MAX_PREGEN_ATTEMPTS per day so a misconfigured key can't loop forever.
+ * An in-flight guard prevents overlapping runs when image generation is slow.
+ */
+export async function pregenerateUpcomingCard(now = new Date()) {
+  const settings = getSettings();
+  if (!settings.gemini_api_key) return { skipped: 'no_gemini_key' };
+  if (pregenInFlight) return { skipped: 'in_flight' };
+
+  const parts = nowPartsInTimezone(settings.timezone, now);
+  if (!shouldPregenerate(settings, parts, getConfig(LAST_PREGEN_KEY))) {
+    return { skipped: 'not_due' };
+  }
+
+  pregenInFlight = true;
+  try {
+    const target = addDays(parts.date, 1);
+    const attempts = (pregenAttempts.get(parts.date) || 0) + 1;
+    pregenAttempts.set(parts.date, attempts);
+
+    logger.info(`Pre-generating tomorrow's card (${target}), attempt ${attempts}…`);
+    const card = await generateCardForDate(target, { withImage: true });
+
+    // Mark the day done on AI success, or after exhausting retries (keep the fallback card).
+    if (card.generation_status === 'ai' || attempts >= MAX_PREGEN_ATTEMPTS) {
+      setConfig(LAST_PREGEN_KEY, parts.date);
+      pregenAttempts.delete(parts.date);
+      logger.info(`Pre-generation done for ${target} (status=${card.generation_status}).`);
+      return { generated: target, status: card.generation_status };
+    }
+
+    logger.warn(
+      `Pre-generation for ${target} fell back; will retry (attempt ${attempts}/${MAX_PREGEN_ATTEMPTS}).`,
+    );
+    return { retry: target, attempts };
+  } finally {
+    pregenInFlight = false;
+  }
+}
+
 let task = null;
 
 export function startScheduler() {
   if (task) return; // idempotent
-  task = cron.schedule('* * * * *', () => {
-    runDueSchedules().catch((err) => logger.error('Scheduler tick failed:', err));
+  task = cron.schedule('* * * * *', async () => {
+    // Pre-generation and notification dispatch are independent; one failing must not block
+    // the other.
+    await pregenerateUpcomingCard().catch((err) => logger.error('Pre-generation failed:', err));
+    await runDueSchedules().catch((err) => logger.error('Scheduler tick failed:', err));
   });
   logger.info('Notification scheduler started (every minute).');
 }

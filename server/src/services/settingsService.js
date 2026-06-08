@@ -39,6 +39,14 @@ export function updateSettings(patch) {
       patch.geminiImageModel !== undefined
         ? patch.geminiImageModel || null
         : current.gemini_image_model,
+    // Daily pre-generation of the next day's card.
+    auto_generate_enabled:
+      patch.autoGenerateEnabled !== undefined
+        ? patch.autoGenerateEnabled
+          ? 1
+          : 0
+        : current.auto_generate_enabled,
+    auto_generate_time: patch.autoGenerateTime ?? current.auto_generate_time,
     updated_at: new Date().toISOString(),
   };
 
@@ -54,6 +62,8 @@ export function updateSettings(patch) {
        gemini_api_key = @gemini_api_key,
        gemini_text_model = @gemini_text_model,
        gemini_image_model = @gemini_image_model,
+       auto_generate_enabled = @auto_generate_enabled,
+       auto_generate_time = @auto_generate_time,
        updated_at = @updated_at
      WHERE id = 1`,
   ).run(merged);

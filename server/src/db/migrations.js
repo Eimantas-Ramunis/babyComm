@@ -95,6 +95,10 @@ function applyColumnUpgrades() {
   addColumnIfMissing('settings', 'gemini_text_model', 'gemini_text_model TEXT');
   addColumnIfMissing('settings', 'gemini_image_model', 'gemini_image_model TEXT');
 
+  // Daily pre-generation of the next day's AI card.
+  addColumnIfMissing('settings', 'auto_generate_enabled', 'auto_generate_enabled INTEGER DEFAULT 1');
+  addColumnIfMissing('settings', 'auto_generate_time', "auto_generate_time TEXT DEFAULT '20:00'");
+
   // Phase 2 push: dedupe devices by subscription endpoint.
   addColumnIfMissing('push_devices', 'endpoint', 'endpoint TEXT');
   db.exec(

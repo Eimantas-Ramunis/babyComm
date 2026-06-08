@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { shouldRunSchedule } from '../services/schedulerService.js';
+import { shouldRunSchedule, shouldPregenerate } from '../services/schedulerService.js';
 
 // Base schedule: enabled daily at 09:00, every day.
 function schedule(overrides = {}) {
@@ -81,4 +81,32 @@ test('send_on_new_week does NOT fire pre-conception (week 0, clamped day 0)', ()
 
 test('empty days_of_week means every day', () => {
   assert.equal(shouldRunSchedule(schedule({ days_of_week: '' }), nowParts()), true);
+});
+
+// ---- shouldPregenerate ----
+
+function pregenSettings(overrides = {}) {
+  return { auto_generate_enabled: 1, auto_generate_time: '20:00', ...overrides };
+}
+
+test('pregenerate fires at/after the configured time, once per day', () => {
+  // before time -> no
+  assert.equal(shouldPregenerate(pregenSettings(), nowParts({ time: '19:59' }), null), false);
+  // at time -> yes
+  assert.equal(shouldPregenerate(pregenSettings(), nowParts({ time: '20:00' }), null), true);
+  // after time -> yes (catch-up if the exact minute was missed)
+  assert.equal(shouldPregenerate(pregenSettings(), nowParts({ time: '22:30' }), null), true);
+});
+
+test('pregenerate dedupes once it has run today', () => {
+  const parts = nowParts({ time: '20:00' });
+  assert.equal(shouldPregenerate(pregenSettings(), parts, parts.date), false);
+  assert.equal(shouldPregenerate(pregenSettings(), parts, '2026-06-09'), true); // ran yesterday
+});
+
+test('pregenerate respects the enabled flag', () => {
+  assert.equal(
+    shouldPregenerate(pregenSettings({ auto_generate_enabled: 0 }), nowParts({ time: '21:00' }), null),
+    false,
+  );
 });

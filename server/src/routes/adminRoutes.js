@@ -77,6 +77,13 @@ router.put('/settings', (req, res) => {
   if (notificationsEnabled !== undefined && typeof notificationsEnabled !== 'boolean') {
     return res.status(400).json({ error: 'notificationsEnabled must be a boolean.' });
   }
+  const { autoGenerateEnabled, autoGenerateTime } = req.body ?? {};
+  if (autoGenerateEnabled !== undefined && typeof autoGenerateEnabled !== 'boolean') {
+    return res.status(400).json({ error: 'autoGenerateEnabled must be a boolean.' });
+  }
+  if (autoGenerateTime !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(autoGenerateTime)) {
+    return res.status(400).json({ error: 'autoGenerateTime must be HH:mm (24h).' });
+  }
 
   res.json(serializeSettings(updateSettings(req.body ?? {})));
 });

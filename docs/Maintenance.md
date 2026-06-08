@@ -37,6 +37,11 @@ docker compose up -d
 - **Update model names:** Gemini model names change. If generation starts failing with 4xx,
   update the text/image model in /admin (e.g. a newer `gemini-*-flash`). Until then the app
   falls back to the canned message.
+- **Daily card pre-generation:** /admin → "Auto-generate tomorrow's card daily" + a time
+  (default 20:00). Each evening the next day's AI card (text + image) is prepared in advance so
+  notifications/homepage show the AI content, not the fallback. Needs a Gemini key; if a run
+  falls back it retries a few times, then keeps the fallback for that day. To prepare a card
+  immediately, use "Generate today's card".
 - **Pause all notifications:** /admin → turn off the **notifications master switch**. Schedules
   remain but won't fire.
 - **Disable a specific schedule/device:** /admin → Schedules / Devices → Disable.

@@ -99,9 +99,15 @@ export function getTodayCard() {
 // The scheduler/homepage use this name; it must stay text-only/fast (never trigger AI/image).
 export const getOrCreateTodayCard = getTodayCard;
 
-/** All saved cards, newest first. */
+/**
+ * Saved cards, newest first. Excludes future-dated cards (e.g. tomorrow's card that was
+ * pre-generated in advance) so they don't appear in history before their day arrives.
+ */
 export function getHistory() {
-  return db.prepare('SELECT * FROM daily_cards ORDER BY card_date DESC').all();
+  const today = todayInTimezone(getSettings().timezone);
+  return db
+    .prepare('SELECT * FROM daily_cards WHERE card_date <= ? ORDER BY card_date DESC')
+    .all(today);
 }
 
 /** Recent homepage messages (newest first) to give the AI anti-repetition context. */

@@ -52,10 +52,18 @@ card's week so week + trimester always agree.
 (fallback on failure), then optionally Gemini image (best-effort, saved to `data/uploads`).
 Images are never generated on page load.
 
-**Scheduler** — every minute, `runDueSchedules` reads settings; if notifications are enabled,
-for each schedule where the pure `shouldRunSchedule` returns true it ensures today's card
-(fast path) and sends the short notification to all active devices, then stamps `last_run_at`
-(dedupe is by calendar date in the configured timezone).
+**Scheduler** — every minute the cron tick runs two independent jobs:
+- `pregenerateUpcomingCard`: once per day at/after `auto_generate_time`, AI-generates **tomorrow's**
+  card (text + image) in advance so it's ready before the morning. Deduped via the
+  `last_pregen_date` app_config key; retries (bounded) if the AI text falls back; guarded against
+  overlapping runs. Skipped without a Gemini key. Not gated by the notifications switch.
+- `runDueSchedules`: if notifications are enabled, for each schedule where the pure
+  `shouldRunSchedule` returns true it ensures today's card (fast path — already AI if
+  pre-generated) and sends the short notification to all active devices, then stamps
+  `last_run_at` (dedupe by calendar date in the configured timezone).
+
+Future-dated cards (the pre-generated tomorrow card) are excluded from `/api/history` until
+their day arrives.
 
 **Push** — `ensureVapidKeys` on boot (env → app_config → generate+persist). Devices subscribe
 via the public `POST /api/push/register` (deduped by endpoint). Sends that return 404/410 mark

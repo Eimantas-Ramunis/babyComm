@@ -21,6 +21,8 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
     personality: settings.personality || 'Sweet Bean',
     tone: settings.tone || '',
     notificationsEnabled: settings.notificationsEnabled ?? true,
+    autoGenerateEnabled: settings.autoGenerateEnabled ?? true,
+    autoGenerateTime: settings.autoGenerateTime || '20:00',
     geminiTextModel: settings.geminiTextModel || '',
     geminiImageModel: settings.geminiImageModel || '',
     geminiApiKey: '', // never prefilled; only sent if the user types a new key
@@ -41,6 +43,8 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
       personality: form.personality,
       tone: form.tone,
       notificationsEnabled: form.notificationsEnabled,
+      autoGenerateEnabled: form.autoGenerateEnabled,
+      autoGenerateTime: form.autoGenerateTime,
       geminiTextModel: form.geminiTextModel,
       geminiImageModel: form.geminiImageModel,
     };
@@ -113,6 +117,24 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
           onChange={(e) => update('notificationsEnabled', e.target.checked)}
         />
         <span>Notifications enabled (master switch)</span>
+      </label>
+
+      <label className="field field--check">
+        <input
+          type="checkbox"
+          checked={form.autoGenerateEnabled}
+          onChange={(e) => update('autoGenerateEnabled', e.target.checked)}
+        />
+        <span>Auto-generate tomorrow’s card daily</span>
+      </label>
+
+      <label className="field">
+        <span>Auto-generate time (when tomorrow’s card is prepared)</span>
+        <input
+          type="time"
+          value={form.autoGenerateTime}
+          onChange={(e) => update('autoGenerateTime', e.target.value)}
+        />
       </label>
 
       <fieldset className="fieldset">
