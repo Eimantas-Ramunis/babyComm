@@ -41,10 +41,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - DOMAIN=${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com) in .env}
+    # Configure Caddy via its CLI (automatic HTTPS for DOMAIN, reverse-proxy to the app) instead
+    # of a bind-mounted Caddyfile — single-file bind mounts are unreliable in Portainer git stacks.
+    command: caddy reverse-proxy --from ${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com)} --to app:3000
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
 
