@@ -50,5 +50,27 @@ export const updateSettings = (settings) =>
   request('/admin/settings', { method: 'PUT', body: settings, admin: true });
 export const generateTodayCard = () =>
   request('/admin/cards/generate-today', { method: 'POST', admin: true });
+export const regenerateMessage = (date) =>
+  request(`/admin/cards/${date}/regenerate-message`, { method: 'POST', admin: true });
+export const regenerateImage = (date) =>
+  request(`/admin/cards/${date}/regenerate-image`, { method: 'POST', admin: true });
+export const sendTestNotification = () =>
+  request('/admin/notifications/test', { method: 'POST', admin: true });
+
 export const getSchedules = () => request('/admin/schedules', { admin: true });
+export const createSchedule = (schedule) =>
+  request('/admin/schedules', { method: 'POST', body: schedule, admin: true });
+export const updateSchedule = (id, schedule) =>
+  request(`/admin/schedules/${id}`, { method: 'PUT', body: schedule, admin: true });
+export const deleteSchedule = (id) =>
+  request(`/admin/schedules/${id}`, { method: 'DELETE', admin: true });
+
 export const getDevices = () => request('/admin/devices', { admin: true });
+export const setDeviceActive = (id, active) =>
+  request(`/admin/devices/${id}`, { method: 'PATCH', body: { active }, admin: true });
+export const deleteDevice = (id) =>
+  request(`/admin/devices/${id}`, { method: 'DELETE', admin: true });
+
+// Public push endpoints (no admin header).
+export const getVapidPublicKey = () => request('/push/vapid-public-key');
+export const registerPush = (body) => request('/push/register', { method: 'POST', body });

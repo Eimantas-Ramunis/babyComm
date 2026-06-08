@@ -355,3 +355,70 @@ body {
 .status--ok {
   color: #15803d;
 }
+
+/* ---- Phase 2: subscribe, admin panels ---- */
+
+.subscribe-card {
+  text-align: center;
+}
+
+.subscribe-card__text {
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+.subscribe-card__ok {
+  margin: 0;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.field--check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.field--check input {
+  width: 18px;
+  height: 18px;
+}
+
+.fieldset {
+  border: 1.5px solid #f0e2d6;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fieldset legend {
+  font-weight: 800;
+  color: var(--accent);
+  padding: 0 6px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn--small {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+}
+
+.device-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.schedule-form {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1.5px solid #f7ecdf;
+}

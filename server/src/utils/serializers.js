@@ -33,6 +33,7 @@ export function serializeMemory(memory) {
 }
 
 export function serializeSettings(settings) {
+  const key = settings.gemini_api_key;
   return {
     babyNickname: settings.baby_nickname,
     dueDate: settings.due_date,
@@ -40,6 +41,12 @@ export function serializeSettings(settings) {
     timezone: settings.timezone,
     personality: settings.personality,
     tone: settings.tone,
+    notificationsEnabled: Boolean(settings.notifications_enabled),
+    geminiTextModel: settings.gemini_text_model,
+    geminiImageModel: settings.gemini_image_model,
+    // Never expose the raw key. Report only whether it is set + the last 4 chars.
+    geminiApiKeySet: Boolean(key),
+    geminiKeyLast4: key ? key.slice(-4) : null,
     updatedAt: settings.updated_at,
   };
 }

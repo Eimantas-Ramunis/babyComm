@@ -4,119 +4,117 @@ A small, private Progressive Web App where an unborn baby "sends" warm, funny da
 updates to mom during pregnancy. Dad configures everything from a private admin page.
 This is a personal gift for one family — not a generic pregnancy tracker or SaaS.
 
-> **Status: Phase 1 (runnable skeleton).** No AI, push notifications, or scheduler yet —
-> those are Phase 2+. Everything degrades to friendly fallback content so the homepage
-> never depends on AI.
+> **Status: Phase 2.** Push notifications, the per-minute scheduler, and Gemini AI text +
+> image generation are implemented. The homepage still degrades gracefully to fallback
+> content if AI is unavailable.
 
 ## Stack
 
-- **Frontend:** React + Vite + React Router, `vite-plugin-pwa`, plain CSS.
-- **Backend:** Node.js + Express, SQLite via `better-sqlite3`.
-- **Tests:** Node's built-in test runner (`node --test`).
+- **Frontend:** React + Vite + React Router, `vite-plugin-pwa` (custom service worker for
+  push), plain CSS.
+- **Backend:** Node.js + Express, SQLite via `better-sqlite3`, `web-push` (VAPID),
+  `node-cron`, Gemini API (text + image) called server-side only.
+- **Tests:** Node's built-in test runner (`node --test`) + `supertest` integration tests.
+- **Deploy:** single Docker image (server serves the built client + API); `docker-compose`
+  with Caddy (auto-HTTPS) + DuckDNS. See [`docs/Deployment.md`](docs/Deployment.md).
 
 ## Project layout
 
 ```
 babyComm/
-  client/   React + Vite PWA frontend
-  server/   Express + SQLite backend
-  docs/      Product spec + this phase's plan
-  .env.example
-  docker-compose.yml
+  client/            React + Vite PWA frontend
+  server/            Express + SQLite backend
+  docs/              Product spec, plans, deployment/maintenance/architecture
+  Dockerfile         Multi-stage image (client build -> server runtime)
+  docker-compose.yml app + Caddy + DuckDNS stack
+  Caddyfile          Reverse proxy with automatic HTTPS
+  .env.example          local dev env (server)
+  .env.compose.example  production stack env (compose)
 ```
 
-## Setup
+## Local setup
 
 ### 1. Environment
-
-Copy the example env file to the repo root and edit it:
 
 ```bash
 cp .env.example .env
 # set ADMIN_PASSWORD to something private
 ```
 
-The server reads `.env` from the repo root. The SQLite database is created
-automatically on first boot at `server/data/app.sqlite` (relative to the server).
-Phase 1 ignores the `GEMINI_*` and `VAPID_*` keys — leave them blank.
+The server reads `.env` from the repo root. The SQLite database + generated images are
+created automatically under `server/data/` on first boot. VAPID keys are auto-generated and
+persisted on first boot — no manual key generation needed for local dev. The Gemini API key
+is **not** set here; it is configured in the admin panel.
 
 ### 2. Backend
 
 ```bash
-cd server
-npm install
-npm run dev     # starts http://localhost:3000 (auto-restarts on change)
+cd server && npm install && npm run dev   # http://localhost:3000
 ```
-
-The database schema is created and a default settings row is seeded on boot.
 
 ### 3. Frontend (separate terminal)
 
 ```bash
-cd client
-npm install
-npm run dev         # starts Vite, proxies /api -> http://localhost:3000
+cd client && npm install && npm run dev   # Vite, proxies /api -> :3000
 ```
 
 Open the URL Vite prints (usually http://localhost:5173).
 
 ## Admin access
 
-Admin endpoints require the header `x-admin-password: <ADMIN_PASSWORD>`. In the UI, go to
-**/admin**, enter the password (stored in `localStorage` for dev convenience), then edit
-settings, save, and click **Generate today's card**.
+Admin endpoints require the header `x-admin-password: <ADMIN_PASSWORD>`. In the UI go to
+**/admin**, enter the password (stored in `localStorage` for dev convenience). From there you can:
 
-## What's implemented (Phase 1)
+- Edit settings (nickname, due date, timezone, personality, tone).
+- **Set the Gemini API key + model names** (key is stored server-side and shown masked).
+- Toggle the **notifications master switch**.
+- **Generate today's card** (AI text + image when a key is set, otherwise a fallback card),
+  and regenerate the message or image.
+- Manage **schedules** (create/enable/disable/delete) and **devices** (register this device,
+  send a test notification, enable/disable, remove).
 
-- Pregnancy calculation engine (week/day, trimester, days remaining, due-date-passed) in
-  `server/src/services/pregnancyService.js`, with size/development data per week.
-- SQLite schema + seeded default settings.
-- Public API: `GET /api/today`, `GET /api/history`, `GET /api/memories`,
-  `POST /api/push/register` (stub).
-- Admin API (password-protected): settings GET/PUT, `cards/generate-today` (fallback card),
-  schedules GET/POST, devices GET, memories CRUD.
-- Fallback daily cards so the homepage always renders.
-- Frontend: Home, History, Memories, Admin pages; cozy warm theme.
-- PWA manifest + service worker via `vite-plugin-pwa`; app icons are generated
-  automatically before `npm run build` (zero-dependency `scripts/gen-icons.mjs`).
-- Tests for pregnancy + date logic.
+## Push notifications (local testing)
 
-## What's NOT implemented yet (Phase 2+)
+Web Push works on `http://localhost` in desktop Chrome/Edge without HTTPS:
 
-- Real web push (VAPID / `web-push`), service-worker push handling, test notifications.
-- Notification scheduler (cron).
-- Gemini text + image generation.
-- Docker HTTPS / DuckDNS production deployment.
+1. On **Home**, click **"Turn on baby updates"** and allow notifications.
+2. In **/admin → Devices**, click **Send test notification** — it should appear; clicking it
+   focuses/opens the app.
 
-Service files for these exist as clearly-labeled stubs:
-`aiTextService.js`, `aiImageService.js`, `pushService.js`, `schedulerService.js`.
+On a real phone, push requires HTTPS — see [`docs/Deployment.md`](docs/Deployment.md).
+
+## Gemini setup
+
+1. Get an API key from Google AI Studio.
+2. In **/admin**, paste it into **AI (Gemini) → API key** and Save.
+3. Optionally set the text/image model names (defaults: `gemini-2.5-flash` and
+   `gemini-2.5-flash-image`). **Verify current model names in the Gemini docs** — they change.
+4. Click **Generate today's card**. `generationStatus` becomes `ai`; images are saved under
+   `server/data/uploads/cards/` and served from `/uploads/...`. The key never reaches the
+   browser (masked on read).
 
 ## Tests
 
 ```bash
-cd server
-npm test
+cd server && npm test   # unit + supertest integration (no network/Gemini calls)
 ```
 
-## Manual QA
+## What's implemented
 
-1. `cd server && npm install && npm test` → all tests pass.
-2. Start the server, then:
-   ```bash
-   curl http://localhost:3000/api/today        # returns status + a fallback card
-   curl http://localhost:3000/api/history       # array (today's card after first /today)
-   curl http://localhost:3000/api/memories       # []
-   curl -i http://localhost:3000/api/admin/settings                 # 401
-   curl -H "x-admin-password: change-me" http://localhost:3000/api/admin/settings  # 200
-   ```
-3. Start the client, open the app:
-   - Home shows the cozy card from the live API.
-   - History and Memories render (empty states until data exists).
-   - Admin: log in → edit settings → save → "Generate today's card" shows a success notice;
-     the card then appears on Home/History.
-4. `cd client && npm run build` succeeds; manifest + icons are present in `dist/`.
+- **Phase 1:** pregnancy engine, fallback cards, settings, history, memories, PWA shell.
+- **Phase 2:** web-push/VAPID with device upsert + auto-deactivate on 410; custom
+  service-worker push handling + self-subscribe; per-minute scheduler with dedupe + master
+  switch; Gemini text + image generation configured via admin (masked key); Docker + Caddy +
+  DuckDNS deployment; expanded synthetic tests.
 
-## Next phase
+## What's NOT implemented yet
 
-**Phase 4 (push)** or **Phase 5 (Gemini text)** — see `docs/Phase1Plan.md` and
-`docs/ReadMe.md` for the full roadmap.
+Special-event messages (F11), delivery-day mode (F12), richer polish/animations (Phase 7),
+memory image-upload UI. Real-phone push needs the HTTPS deployment.
+
+## Docs
+
+- [`docs/Architecture.md`](docs/Architecture.md) — how it fits together.
+- [`docs/Deployment.md`](docs/Deployment.md) — Raspberry Pi + Portainer + HTTPS.
+- [`docs/Maintenance.md`](docs/Maintenance.md) — operations runbook.
+- [`docs/Phase2Plan.md`](docs/Phase2Plan.md) — this phase's plan.

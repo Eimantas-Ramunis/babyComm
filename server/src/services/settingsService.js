@@ -20,6 +20,25 @@ export function updateSettings(patch) {
     timezone: patch.timezone ?? current.timezone,
     personality: patch.personality ?? current.personality,
     tone: patch.tone ?? current.tone,
+    // notifications master switch (boolean from API -> 0/1)
+    notifications_enabled:
+      patch.notificationsEnabled !== undefined
+        ? patch.notificationsEnabled
+          ? 1
+          : 0
+        : current.notifications_enabled,
+    // Gemini config (secrets stay server-side; never returned raw to the client).
+    // An empty string clears the key; undefined leaves it unchanged.
+    gemini_api_key:
+      patch.geminiApiKey !== undefined ? patch.geminiApiKey || null : current.gemini_api_key,
+    gemini_text_model:
+      patch.geminiTextModel !== undefined
+        ? patch.geminiTextModel || null
+        : current.gemini_text_model,
+    gemini_image_model:
+      patch.geminiImageModel !== undefined
+        ? patch.geminiImageModel || null
+        : current.gemini_image_model,
     updated_at: new Date().toISOString(),
   };
 
@@ -31,6 +50,10 @@ export function updateSettings(patch) {
        timezone = @timezone,
        personality = @personality,
        tone = @tone,
+       notifications_enabled = @notifications_enabled,
+       gemini_api_key = @gemini_api_key,
+       gemini_text_model = @gemini_text_model,
+       gemini_image_model = @gemini_image_model,
        updated_at = @updated_at
      WHERE id = 1`,
   ).run(merged);

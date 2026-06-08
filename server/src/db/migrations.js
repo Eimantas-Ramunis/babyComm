@@ -69,7 +69,38 @@ CREATE TABLE IF NOT EXISTS memories (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- Server-managed key/value config (e.g. auto-generated VAPID keys). Not user-edited.
+CREATE TABLE IF NOT EXISTS app_config (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
 `;
+
+/**
+ * Add a column to a table only if it does not already exist.
+ * Keeps migrations upgrade-safe for databases created by an earlier phase.
+ */
+function addColumnIfMissing(table, column, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+  }
+}
+
+function applyColumnUpgrades() {
+  // Phase 2 settings: notifications master switch + Gemini config (key stored server-side only).
+  addColumnIfMissing('settings', 'notifications_enabled', 'notifications_enabled INTEGER DEFAULT 1');
+  addColumnIfMissing('settings', 'gemini_api_key', 'gemini_api_key TEXT');
+  addColumnIfMissing('settings', 'gemini_text_model', 'gemini_text_model TEXT');
+  addColumnIfMissing('settings', 'gemini_image_model', 'gemini_image_model TEXT');
+
+  // Phase 2 push: dedupe devices by subscription endpoint.
+  addColumnIfMissing('push_devices', 'endpoint', 'endpoint TEXT');
+  db.exec(
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_push_devices_endpoint ON push_devices(endpoint)',
+  );
+}
 
 // Default due date for first boot: ~28 weeks out so the demo lands in 2nd trimester.
 function defaultDueDate() {
@@ -101,5 +132,6 @@ function seedSettings() {
 
 export function runMigrations() {
   db.exec(SCHEMA);
+  applyColumnUpgrades();
   seedSettings();
 }

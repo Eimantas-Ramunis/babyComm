@@ -6,6 +6,7 @@ import {
   daysBetween,
   isValidDateString,
   todayInTimezone,
+  nowPartsInTimezone,
 } from '../utils/dateUtils.js';
 
 test('addDays shifts forward and backward, crossing month boundaries', () => {
@@ -34,4 +35,25 @@ test('todayInTimezone returns a YYYY-MM-DD string for a fixed instant', () => {
   const instant = new Date('2026-06-08T23:30:00Z');
   assert.equal(todayInTimezone('Europe/Vilnius', instant), '2026-06-09');
   assert.equal(todayInTimezone('UTC', instant), '2026-06-08');
+});
+
+test('nowPartsInTimezone returns date/time/dayOfWeek in the given zone', () => {
+  // 2026-06-08 is a Monday. At 23:30Z it is 2026-06-09 02:30 in Vilnius (Tuesday).
+  const instant = new Date('2026-06-08T23:30:00Z');
+
+  const utc = nowPartsInTimezone('UTC', instant);
+  assert.deepEqual(utc, { date: '2026-06-08', time: '23:30', dayOfWeek: 1 });
+
+  const vilnius = nowPartsInTimezone('Europe/Vilnius', instant);
+  assert.equal(vilnius.date, '2026-06-09');
+  assert.equal(vilnius.time, '02:30');
+  assert.equal(vilnius.dayOfWeek, 2);
+});
+
+test('nowPartsInTimezone normalizes midnight hour to 00', () => {
+  // 2026-06-08T21:00:00Z = 2026-06-09 00:00 in Vilnius.
+  const instant = new Date('2026-06-08T21:00:00Z');
+  const vilnius = nowPartsInTimezone('Europe/Vilnius', instant);
+  assert.equal(vilnius.time, '00:00');
+  assert.equal(vilnius.date, '2026-06-09');
 });

@@ -1,23 +1,59 @@
-# Minimal starting point for deploying the backend (Phase 1).
-# Phase 7 will flesh this out with the built client, an HTTPS reverse proxy
-# (Traefik/Caddy), and DuckDNS. For now this just runs the Express server.
+# Baby Growth PWA — production stack for a Raspberry Pi (deploy via Portainer).
+#
+# Services:
+#   app     — the PWA (server serves built client + API on :3000), HTTP only.
+#   caddy   — reverse proxy that terminates HTTPS (auto Let's Encrypt) for your DuckDNS domain.
+#   duckdns — keeps your DuckDNS subdomain pointed at the Pi's current public IP.
+#
+# Copy .env.compose.example to .env (next to this file) and fill it in. See docs/Deployment.md.
 
 services:
-  server:
-    image: node:22-alpine
-    working_dir: /app/server
-    command: sh -c "npm install --omit=dev && npm start"
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: baby-growth-pwa:latest
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_PATH=/app/server/data/app.sqlite
-      # Set ADMIN_PASSWORD via an .env file or your orchestrator's secrets.
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change-me}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      - APP_BASE_URL=https://${DOMAIN}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@example.com}
+      # Optional: pin VAPID keys across rebuilds (otherwise auto-generated + persisted in the DB).
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
     volumes:
-      - ./server:/app/server
-      - server-data:/app/server/data
+      - app-data:/app/server/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
     ports:
-      - "3000:3000"
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:?set DOMAIN (your-name.duckdns.org) in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Europe/Vilnius}
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN:?set DUCKDNS_SUBDOMAIN in .env}
+      - TOKEN=${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN in .env}
+      - UPDATE_IP=ipv4
 
 volumes:
-  server-data:
+  app-data:
+  caddy-data:
+  caddy-config:

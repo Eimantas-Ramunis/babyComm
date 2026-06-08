@@ -45,3 +45,31 @@ export function addDays(dateStr, n) {
   const base = Date.parse(`${dateStr}T00:00:00Z`);
   return toDateString(new Date(base + n * MS_PER_DAY));
 }
+
+/**
+ * Current wall-clock parts in the given timezone, for the scheduler.
+ * Returns { date:'YYYY-MM-DD', time:'HH:mm', dayOfWeek } where dayOfWeek is 0=Sunday..6=Saturday.
+ */
+export function nowPartsInTimezone(timezone = 'Europe/Vilnius', now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    weekday: 'short',
+  }).formatToParts(now);
+
+  const get = (type) => parts.find((p) => p.type === type)?.value;
+  // 'en-CA' returns hour '24' at midnight; normalize to '00'.
+  const hour = get('hour') === '24' ? '00' : get('hour');
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${hour}:${get('minute')}`,
+    dayOfWeek: weekdayMap[get('weekday')],
+  };
+}

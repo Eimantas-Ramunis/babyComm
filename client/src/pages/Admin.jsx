@@ -4,11 +4,11 @@ import {
   setStoredPassword,
   getSettings,
   updateSettings,
-  generateTodayCard,
   getSchedules,
   getDevices,
 } from '../services/api.js';
 import AdminSettingsForm from '../components/AdminSettingsForm.jsx';
+import CardGenerator from '../components/CardGenerator.jsx';
 import ScheduleManager from '../components/ScheduleManager.jsx';
 import DeviceManager from '../components/DeviceManager.jsx';
 
@@ -56,14 +56,14 @@ export default function Admin() {
     }
   }
 
-  async function handleGenerate() {
-    setNotice(null);
-    setError(null);
-    try {
-      const res = await generateTodayCard();
-      setNotice(`Today’s card generated (${res.mode}).`);
-    } catch (err) {
-      setError(err.message);
+  // Shared result handler for the action panels (cards/devices/schedules).
+  function handleResult(result) {
+    if (result.ok) {
+      setNotice(result.message);
+      setError(null);
+    } else {
+      setError(result.message);
+      setNotice(null);
     }
   }
 
@@ -117,19 +117,15 @@ export default function Admin() {
       )}
 
       <section className="card">
-        <h3 className="panel__title">Cards</h3>
-        <button type="button" className="btn btn--primary" onClick={handleGenerate}>
-          Generate today’s card
-        </button>
-        <p className="muted">Phase 1 creates a warm fallback card (no AI yet).</p>
+        <CardGenerator onResult={handleResult} />
       </section>
 
       <section className="card">
-        <ScheduleManager schedules={schedules} />
+        <ScheduleManager schedules={schedules} onChange={setSchedules} onResult={handleResult} />
       </section>
 
       <section className="card">
-        <DeviceManager devices={devices} />
+        <DeviceManager devices={devices} onChange={setDevices} onResult={handleResult} />
       </section>
     </div>
   );

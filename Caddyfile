@@ -1,0 +1,11 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt) for the DuckDNS domain.
+# {$DOMAIN} is provided by the caddy service environment in docker-compose.yml.
+#
+# Requires ports 80 and 443 reachable from the internet (forward them on your router) so
+# Caddy can complete the ACME challenge. If you cannot open port 80, switch to the DNS
+# challenge with a Caddy build that includes the caddy-dns/duckdns plugin (see docs/Deployment.md).
+
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000
+}
