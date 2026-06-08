@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3001
       - DATABASE_PATH=/app/server/data/app.sqlite
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
       - APP_BASE_URL=https://${DOMAIN}
