@@ -12,8 +12,10 @@ updater container.
   - **TP-Link DDNS** (e.g. `baby.tplinkdns.com`) — managed by your TP-Link router. Recommended
     if you have a TP-Link router; no extra container needed.
   - **DuckDNS** (e.g. `tinybean.duckdns.org`) — uses the optional `duckdns` updater service.
-- Ports **80** and **443** forwarded from your router to the Pi (Caddy needs them for the
-  Let's Encrypt ACME challenge). If you cannot open port 80, see *DNS challenge* below.
+- Port **443** (TCP) forwarded from your router to the Pi. The bundled Caddy publishes only 443
+  and gets its Let's Encrypt cert via the TLS-ALPN-01 challenge, so port 80 is NOT required (handy
+  when something else on the Pi — e.g. Pi-hole — already uses 80). Forward 80 too only if you want
+  HTTP→HTTPS redirects.
 
 ## DDNS setup
 
