@@ -35,9 +35,10 @@ services:
     ports:
       - "${APP_PORT:-3001}:3000"
 
-  # Bundled HTTPS. Publishes ONLY 443 (port 80 is often taken on a Pi, e.g. by Pi-hole's
-  # lighttpd). Caddy gets the Let's Encrypt cert over 443 via the TLS-ALPN-01 challenge, so it
-  # never touches 80. Forward port 443 (TCP) from your router to the Pi.
+  # Bundled HTTPS. Caddy serves TLS on container port 443, published on the host as HTTPS_PORT
+  # (default 8443, so it won't clash with anything already on the host's 80/443 — common on a Pi
+  # running Pi-hole / Home Assistant). Forward your router's EXTERNAL 443 -> <pi>:${HTTPS_PORT}.
+  # Caddy gets its Let's Encrypt cert via the TLS-ALPN-01 challenge over that forwarded 443.
   #
   # Don't want bundled HTTPS (you have your own reverse proxy)? Delete this whole `caddy:` service
   # and point your proxy at http://<pi>:${APP_PORT}. (Profiles are intentionally NOT used here —
@@ -48,7 +49,7 @@ services:
     depends_on:
       - app
     ports:
-      - "443:443"
+      - "${HTTPS_PORT:-8443}:443"
     # Configure Caddy via its CLI (automatic HTTPS) instead of a bind-mounted Caddyfile —
     # single-file bind mounts are unreliable in Portainer git stacks.
     command: caddy reverse-proxy --from ${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com)} --to app:3000
