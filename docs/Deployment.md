@@ -124,6 +124,22 @@ COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
 Point the `caddy` service at that built image and pass `DUCKDNS_TOKEN` to it.
 
+## Updating the app (force a rebuild)
+
+The `app` service has both `build:` and `image: baby-growth-pwa:latest`. `docker compose up`
+only builds when the image is **absent**, so a plain redeploy reuses the old image and your code
+changes won't appear. To force a rebuild in Portainer:
+
+1. **Stacks → your stack → Stop.**
+2. **Images → delete `baby-growth-pwa:latest`.**
+3. **Stacks → your stack → Pull and redeploy** — compose rebuilds the now-missing image from the
+   latest commit.
+
+(The `app-data` volume persists across this, so the database + uploads are kept.)
+
+After updating, **hard-reload the PWA / clear the site's data** so the service worker picks up the
+new client bundle.
+
 ## Data & volumes
 
 - `app-data` → `/app/server/data` holds `app.sqlite` and `uploads/` (generated images).
