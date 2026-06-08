@@ -4,9 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 
-// Isolated temp DB + known admin password. Set BEFORE importing the app.
-const tmpDb = path.join(os.tmpdir(), `bgp-test-api-${process.pid}.sqlite`);
-process.env.DATABASE_PATH = tmpDb;
+// Isolated temp data dir (DB + uploads) + known admin password. Set BEFORE importing the app.
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bgp-api-'));
+process.env.DATABASE_PATH = path.join(tmpDir, 'app.sqlite');
 process.env.ADMIN_PASSWORD = 'test-secret';
 
 const { createApp } = await import('../app.js');
@@ -15,9 +15,7 @@ const request = (await import('supertest')).default;
 const app = createApp();
 
 after(() => {
-  for (const suffix of ['', '-wal', '-shm']) {
-    fs.rmSync(tmpDb + suffix, { force: true });
-  }
+  fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
 test('GET /api/today returns a card and pregnancy status', async () => {
@@ -74,4 +72,51 @@ test('settings mask: setting a Gemini key reports set + last4, never the raw key
   assert.equal(put.body.geminiApiKeySet, true);
   assert.equal(put.body.geminiKeyLast4, '1234');
   assert.equal(put.body.geminiApiKey, undefined);
+});
+
+test('personalities + tones admin endpoints require auth and round-trip', async () => {
+  assert.equal((await request(app).get('/api/admin/personalities')).status, 401);
+
+  const list = await request(app).get('/api/admin/personalities').set('x-admin-password', 'test-secret');
+  assert.equal(list.status, 200);
+  assert.ok(list.body.length >= 7);
+
+  const added = await request(app)
+    .post('/api/admin/personalities')
+    .set('x-admin-password', 'test-secret')
+    .send({ name: 'Test Persona' });
+  assert.equal(added.status, 201);
+  assert.equal(added.body.name, 'Test Persona');
+
+  const del = await request(app)
+    .delete(`/api/admin/personalities/${added.body.id}`)
+    .set('x-admin-password', 'test-secret');
+  assert.equal(del.status, 200);
+});
+
+test('POST /api/admin/memories accepts a multipart image and stores it', async () => {
+  const png = Buffer.from('89504e470d0a1a0a', 'hex'); // minimal PNG signature
+  const res = await request(app)
+    .post('/api/admin/memories')
+    .set('x-admin-password', 'test-secret')
+    .field('title', 'First scan')
+    .field('memoryAt', '2026-06-05T14:30')
+    .attach('image', png, { filename: 'scan.png', contentType: 'image/png' });
+
+  assert.equal(res.status, 201);
+  assert.equal(res.body.title, 'First scan');
+  assert.ok(res.body.imageUrl?.startsWith('/uploads/memories/'));
+
+  // The image is served back.
+  const img = await request(app).get(res.body.imageUrl);
+  assert.equal(img.status, 200);
+});
+
+test('POST /api/admin/memories rejects a non-image upload', async () => {
+  const res = await request(app)
+    .post('/api/admin/memories')
+    .set('x-admin-password', 'test-secret')
+    .field('title', 'Bad file')
+    .attach('image', Buffer.from('hello'), { filename: 'note.txt', contentType: 'text/plain' });
+  assert.equal(res.status, 400);
 });

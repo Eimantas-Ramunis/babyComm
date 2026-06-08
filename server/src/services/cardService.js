@@ -9,6 +9,12 @@ import { getSettings } from './settingsService.js';
 import { getPregnancyStatus } from './pregnancyService.js';
 import { generateMessage } from './aiTextService.js';
 import { generateImage } from './aiImageService.js';
+import {
+  listPersonalities,
+  listTones,
+  randomPersonality,
+  randomTones,
+} from './lookupService.js';
 import { todayInTimezone } from '../utils/dateUtils.js';
 import { cardsUploadDir, cardImageUrl } from '../utils/paths.js';
 import { logger } from '../utils/logger.js';
@@ -119,8 +125,24 @@ export function getRecentMessages(limit = 5) {
     .filter(Boolean);
 }
 
+// Resolve the personality for a generation: an explicit override (so text + image share one),
+// else a random pick when randomization is on, else the pinned personality.
+function resolvePersonality(settings, override) {
+  if (override) return override;
+  if (settings.randomize_personality) {
+    return randomPersonality(listPersonalities()) || settings.personality || 'Sweet Bean';
+  }
+  return settings.personality || 'Sweet Bean';
+}
+
 // Assemble the AI text-generation context from settings + (already-computed) status.
-function buildAiTextContext(settings, status) {
+// 3 random tones are chosen each time; personality is shared with the image when provided.
+function buildAiTextContext(settings, status, personality) {
+  const tones = randomTones(listTones(), 3);
+  const tone = tones.length ? tones.join(', ') : settings.tone;
+
+  logger.debug(`AI context: personality="${personality}", tones="${tone}"`);
+
   return {
     apiKey: settings.gemini_api_key,
     model: settings.gemini_text_model,
@@ -129,8 +151,8 @@ function buildAiTextContext(settings, status) {
     day: status.gestationalDay,
     sizeLabel: status.sizeLabel,
     developmentFact: status.developmentFact,
-    personality: settings.personality,
-    tone: settings.tone,
+    personality,
+    tone,
     recentMessages: getRecentMessages(5),
   };
 }
@@ -158,11 +180,12 @@ function buildAiCardContent(date, status, message) {
  * failure or when no Gemini key is configured. Returns the saved card row. Preserves any
  * existing image (text-only).
  */
-export async function generateMessageForDate(date, settings = getSettings()) {
+export async function generateMessageForDate(date, settings = getSettings(), personality) {
   if (!settings.gemini_api_key) return createFallbackCard(date, settings);
   const status = getPregnancyStatus(settings, date);
   try {
-    const message = await generateMessage(buildAiTextContext(settings, status));
+    const usePersonality = resolvePersonality(settings, personality);
+    const message = await generateMessage(buildAiTextContext(settings, status, usePersonality));
     logger.info(`AI message generated for ${date}.`);
     return upsertCard(buildAiCardContent(date, status, message), { resetImage: false });
   } catch (err) {
@@ -177,7 +200,7 @@ export async function generateMessageForDate(date, settings = getSettings()) {
  * exists for the date (so the caller can 404 without burning a Gemini call). Best-effort:
  * image failures are swallowed and the card is returned unchanged.
  */
-export async function generateImageForDate(date, settings = getSettings()) {
+export async function generateImageForDate(date, settings = getSettings(), personality) {
   const existing = getCardByDate(date);
   if (!existing) return null; // never generate an orphan image for a nonexistent card
   if (!settings.gemini_api_key) return existing;
@@ -188,7 +211,7 @@ export async function generateImageForDate(date, settings = getSettings()) {
       apiKey: settings.gemini_api_key,
       model: settings.gemini_image_model,
       sizeLabel: status.sizeLabel,
-      personality: settings.personality,
+      personality: resolvePersonality(settings, personality),
     });
     fs.mkdirSync(cardsUploadDir, { recursive: true });
     const filePath = `${cardsUploadDir}/${date}.png`;
@@ -214,7 +237,9 @@ export async function generateImageForDate(date, settings = getSettings()) {
  */
 export async function generateCardForDate(date, { withImage = false } = {}) {
   const settings = getSettings();
-  await generateMessageForDate(date, settings);
-  if (withImage) await generateImageForDate(date, settings);
+  // Resolve the personality once so the message and image describe the same persona.
+  const personality = resolvePersonality(settings);
+  await generateMessageForDate(date, settings, personality);
+  if (withImage) await generateImageForDate(date, settings, personality);
   return getCardByDate(date);
 }

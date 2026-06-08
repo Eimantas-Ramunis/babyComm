@@ -75,7 +75,42 @@ CREATE TABLE IF NOT EXISTS app_config (
   key TEXT PRIMARY KEY,
   value TEXT
 );
+
+-- Admin-managed personality presets (random picker draws from here).
+CREATE TABLE IF NOT EXISTS personalities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
+
+-- Admin-managed tone list (3 are chosen at random per card generation).
+CREATE TABLE IF NOT EXISTS tones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
 `;
+
+const PERSONALITY_SEED = [
+  'Sweet Bean',
+  'Tiny Viking',
+  'Chaos Goblin',
+  'Little CEO',
+  'Future Supervillain',
+  'Soft Poet',
+  'Dad Joke Machine',
+];
+
+// Warm, funny, loving, safe tones (no scary/medical wording).
+const TONE_SEED = [
+  'warm', 'funny', 'loving', 'cheeky', 'playful', 'tender', 'silly', 'witty', 'gentle', 'cozy',
+  'heartfelt', 'goofy', 'sweet', 'mischievous', 'proud', 'curious', 'optimistic', 'dreamy',
+  'affectionate', 'whimsical', 'sincere', 'cuddly', 'upbeat', 'charming', 'hopeful', 'grateful',
+  'adventurous', 'sleepy', 'theatrical', 'poetic', 'cheerful', 'soft', 'reassuring', 'excited',
+  'giggly', 'content', 'snuggly', 'wholesome', 'joyful', 'mellow', 'comforting', 'encouraging',
+  'lighthearted', 'devoted', 'radiant', 'smitten', 'bubbly', 'dramatic but never mean',
+  'tender-hearted', 'sparkly',
+];
 
 /**
  * Add a column to a table only if it does not already exist.
@@ -98,6 +133,10 @@ function applyColumnUpgrades() {
   // Daily pre-generation of the next day's AI card.
   addColumnIfMissing('settings', 'auto_generate_enabled', 'auto_generate_enabled INTEGER DEFAULT 1');
   addColumnIfMissing('settings', 'auto_generate_time', "auto_generate_time TEXT DEFAULT '20:00'");
+
+  // Phase 3: randomize personality per card; memory timestamp (date + time, editable).
+  addColumnIfMissing('settings', 'randomize_personality', 'randomize_personality INTEGER DEFAULT 1');
+  addColumnIfMissing('memories', 'memory_at', 'memory_at TEXT');
 
   // Phase 2 push: dedupe devices by subscription endpoint.
   addColumnIfMissing('push_devices', 'endpoint', 'endpoint TEXT');
@@ -134,8 +173,25 @@ function seedSettings() {
   });
 }
 
+function seedLookups() {
+  const now = new Date().toISOString();
+
+  if (db.prepare('SELECT COUNT(*) AS n FROM personalities').get().n === 0) {
+    const insert = db.prepare('INSERT INTO personalities (name, created_at) VALUES (?, ?)');
+    const tx = db.transaction(() => PERSONALITY_SEED.forEach((name) => insert.run(name, now)));
+    tx();
+  }
+
+  if (db.prepare('SELECT COUNT(*) AS n FROM tones').get().n === 0) {
+    const insert = db.prepare('INSERT INTO tones (label, created_at) VALUES (?, ?)');
+    const tx = db.transaction(() => TONE_SEED.forEach((label) => insert.run(label, now)));
+    tx();
+  }
+}
+
 export function runMigrations() {
   db.exec(SCHEMA);
   applyColumnUpgrades();
   seedSettings();
+  seedLookups();
 }

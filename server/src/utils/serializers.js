@@ -22,6 +22,7 @@ export function serializeMemory(memory) {
   return {
     id: memory.id,
     memoryDate: memory.memory_date,
+    memoryAt: memory.memory_at || memory.memory_date,
     gestationalWeek: memory.gestational_week,
     gestationalDay: memory.gestational_day,
     title: memory.title,
@@ -44,6 +45,7 @@ export function serializeSettings(settings) {
     notificationsEnabled: Boolean(settings.notifications_enabled),
     autoGenerateEnabled: Boolean(settings.auto_generate_enabled),
     autoGenerateTime: settings.auto_generate_time,
+    randomizePersonality: Boolean(settings.randomize_personality),
     geminiTextModel: settings.gemini_text_model,
     geminiImageModel: settings.gemini_image_model,
     // Never expose the raw key. Report only whether it is set + the last 4 chars.

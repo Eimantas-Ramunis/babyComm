@@ -6,11 +6,18 @@ import {
   updateSettings,
   getSchedules,
   getDevices,
+  getPersonalities,
+  addPersonality,
+  deletePersonality,
+  getTones,
+  addTone,
+  deleteTone,
 } from '../services/api.js';
 import AdminSettingsForm from '../components/AdminSettingsForm.jsx';
 import CardGenerator from '../components/CardGenerator.jsx';
 import ScheduleManager from '../components/ScheduleManager.jsx';
 import DeviceManager from '../components/DeviceManager.jsx';
+import ListManager from '../components/ListManager.jsx';
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
@@ -18,15 +25,36 @@ export default function Admin() {
   const [settings, setSettings] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [personalities, setPersonalities] = useState([]);
+  const [tones, setTones] = useState([]);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
 
   async function loadAll() {
-    const [s, sch, dev] = await Promise.all([getSettings(), getSchedules(), getDevices()]);
+    const [s, sch, dev, pers, tns] = await Promise.all([
+      getSettings(),
+      getSchedules(),
+      getDevices(),
+      getPersonalities(),
+      getTones(),
+    ]);
     setSettings(s);
     setSchedules(sch);
     setDevices(dev);
+    setPersonalities(pers);
+    setTones(tns);
+  }
+
+  // Wrap a list mutation: run it, refresh the list, and surface success/error.
+  async function mutateList(fn, refresh, setter, okMsg) {
+    try {
+      await fn();
+      setter(await refresh());
+      handleResult({ ok: true, message: okMsg });
+    } catch (err) {
+      handleResult({ ok: false, message: err.message });
+    }
   }
 
   async function handleLogin(e) {
@@ -112,9 +140,36 @@ export default function Admin() {
       {settings && (
         <section className="card">
           <h3 className="panel__title">Settings</h3>
-          <AdminSettingsForm settings={settings} onSave={handleSave} saving={saving} />
+          <AdminSettingsForm
+            settings={settings}
+            personalities={personalities}
+            onSave={handleSave}
+            saving={saving}
+          />
         </section>
       )}
+
+      <section className="card">
+        <ListManager
+          title="Personalities"
+          items={personalities}
+          labelKey="name"
+          placeholder="Add a personality…"
+          onAdd={(name) => mutateList(() => addPersonality(name), getPersonalities, setPersonalities, 'Personality added.')}
+          onDelete={(id) => mutateList(() => deletePersonality(id), getPersonalities, setPersonalities, 'Personality removed.')}
+        />
+      </section>
+
+      <section className="card">
+        <ListManager
+          title="Tones (3 picked at random per card)"
+          items={tones}
+          labelKey="label"
+          placeholder="Add a tone…"
+          onAdd={(label) => mutateList(() => addTone(label), getTones, setTones, 'Tone added.')}
+          onDelete={(id) => mutateList(() => deleteTone(id), getTones, setTones, 'Tone removed.')}
+        />
+      </section>
 
       <section className="card">
         <CardGenerator onResult={handleResult} />

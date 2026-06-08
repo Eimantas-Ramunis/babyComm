@@ -422,3 +422,305 @@ body {
   padding-top: 16px;
   border-top: 1.5px solid #f7ecdf;
 }
+
+/* ---- Phase 3: list manager chips, memory images ---- */
+
+.chip-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip--removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip__remove {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chip__remove:hover {
+  color: var(--pink);
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+}
+
+.inline-form input {
+  flex: 1;
+  font: inherit;
+  padding: 8px 12px;
+  border: 1.5px solid #f0e2d6;
+  border-radius: var(--radius-sm);
+  background: #fffdfb;
+}
+
+.field textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1.5px solid #f0e2d6;
+  border-radius: var(--radius-sm);
+  background: #fffdfb;
+  resize: vertical;
+}
+
+.memory__image {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+}
+
+/* =====================================================================
+   Home page — mobile-first, big animated hero (pure CSS)
+   ===================================================================== */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Hero: large image with a gentle floating motion ---- */
+
+.hero {
+  position: relative;
+}
+
+.hero__art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1; /* big square — fills the mobile width */
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(249, 115, 22, 0.28);
+  animation: floatY 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Animated gradient placeholder when no image is generated yet */
+.hero__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fdba74, #fb7185, #f9a8d4, #fdba74);
+  background-size: 300% 300%;
+  animation: gradientShift 9s ease infinite;
+}
+
+.hero__emoji {
+  font-size: clamp(4rem, 22vw, 7rem);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15));
+  animation: bobTilt 3.5s ease-in-out infinite;
+}
+
+/* Week badge floating over the image */
+.hero__badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  animation: popIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+.hero__badge small {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Floating decorative emoji that drift upward */
+.floaty {
+  position: absolute;
+  bottom: 8%;
+  font-size: 1.6rem;
+  opacity: 0;
+  pointer-events: none;
+  animation: rise 6s ease-in infinite;
+}
+.floaty--1 { left: 18%; animation-delay: 0.5s; }
+.floaty--2 { left: 50%; font-size: 1.2rem; animation-delay: 2.4s; }
+.floaty--3 { left: 76%; font-size: 1.9rem; animation-delay: 4s; }
+
+/* ---- Name + size ---- */
+
+.home-name {
+  text-align: center;
+}
+
+.baby-name {
+  margin: 0 0 6px;
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  color: var(--accent); /* fallback so the name is never invisible */
+}
+
+/* Apply the gradient-text effect only where background-clip:text is supported. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .baby-name {
+    background: linear-gradient(90deg, var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.size-line {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+}
+
+.size-line strong {
+  color: var(--accent);
+}
+
+.pill-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.pill {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  min-width: 110px;
+  transition: transform 0.2s ease;
+}
+
+.pill:hover {
+  transform: translateY(-3px);
+}
+
+.pill__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.pill__value {
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+/* ---- Message card ---- */
+
+.message-title {
+  margin: 0 0 8px;
+  color: var(--accent);
+}
+
+.message-quote {
+  font-size: 1.1rem;
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.message-fact {
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+
+.mood-chip {
+  background: linear-gradient(90deg, var(--accent-soft), var(--pink));
+  color: #fff;
+}
+
+/* ---- Entrance animations ---- */
+
+.glow-in {
+  animation: fadeInUp 0.6s ease both;
+  animation-delay: var(--delay, 0s);
+}
+
+.hero--enter {
+  animation: fadeInScale 0.7s ease both;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bobTilt {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(4deg); }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes rise {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  15% { opacity: 0.9; }
+  100% { transform: translateY(-180px) scale(1.1); opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Respect users who prefer reduced motion: keep it calm, no looping motion. */
+@media (prefers-reduced-motion: reduce) {
+  .hero__art,
+  .hero__emoji,
+  .hero__placeholder,
+  .floaty,
+  .hero__badge,
+  .glow-in,
+  .hero--enter {
+    animation: none !important;
+  }
+  .floaty { display: none; }
+}

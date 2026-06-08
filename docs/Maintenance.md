@@ -42,6 +42,13 @@ docker compose up -d
   notifications/homepage show the AI content, not the fallback. Needs a Gemini key; if a run
   falls back it retries a few times, then keeps the fallback for that day. To prepare a card
   immediately, use "Generate today's card".
+- **Personalities & tones:** /admin → manage the **Personalities** and **Tones** lists (add/remove).
+  Toggle **"Randomize personality"** to pick a random one per card (or pin one). The generator
+  always picks **3 random tones** per card from the tone list. Newly added entries are included
+  automatically.
+- **Memories:** on the **Prisiminimai** page (while logged in as admin) add/edit/delete memories
+  with an image, caption, and an editable date-time. Images are stored under
+  `data/uploads/memories/` on the `app-data` volume (covered by the backup above).
 - **Pause all notifications:** /admin → turn off the **notifications master switch**. Schedules
   remain but won't fire.
 - **Disable a specific schedule/device:** /admin → Schedules / Devices → Disable.

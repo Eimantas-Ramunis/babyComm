@@ -2,24 +2,22 @@
 
 import { useState } from 'react';
 
-const PERSONALITIES = [
-  'Sweet Bean',
-  'Tiny Viking',
-  'Chaos Goblin',
-  'Little CEO',
-  'Future Supervillain',
-  'Soft Poet',
-  'Dad Joke Machine',
-];
+// Build the personality <select> options, ensuring the currently-saved value is present even if
+// it was removed from the list (so the select reflects state instead of silently showing #1).
+function personalityOptions(personalities, current) {
+  const names = personalities.map((p) => p.name);
+  if (current && !names.includes(current)) return [current, ...names];
+  return names.length ? names : [current].filter(Boolean);
+}
 
-export default function AdminSettingsForm({ settings, onSave, saving }) {
+export default function AdminSettingsForm({ settings, personalities = [], onSave, saving }) {
   const [form, setForm] = useState({
     babyNickname: settings.babyNickname || '',
     dueDate: settings.dueDate || '',
     pregnancyStartDate: settings.pregnancyStartDate || '',
     timezone: settings.timezone || 'Europe/Vilnius',
     personality: settings.personality || 'Sweet Bean',
-    tone: settings.tone || '',
+    randomizePersonality: settings.randomizePersonality ?? true,
     notificationsEnabled: settings.notificationsEnabled ?? true,
     autoGenerateEnabled: settings.autoGenerateEnabled ?? true,
     autoGenerateTime: settings.autoGenerateTime || '20:00',
@@ -41,7 +39,7 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
       pregnancyStartDate: form.pregnancyStartDate || null,
       timezone: form.timezone,
       personality: form.personality,
-      tone: form.tone,
+      randomizePersonality: form.randomizePersonality,
       notificationsEnabled: form.notificationsEnabled,
       autoGenerateEnabled: form.autoGenerateEnabled,
       autoGenerateTime: form.autoGenerateTime,
@@ -94,10 +92,19 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
         />
       </label>
 
+      <label className="field field--check">
+        <input
+          type="checkbox"
+          checked={form.randomizePersonality}
+          onChange={(e) => update('randomizePersonality', e.target.checked)}
+        />
+        <span>Randomize personality each card</span>
+      </label>
+
       <label className="field">
-        <span>Personality</span>
+        <span>{form.randomizePersonality ? 'Personality (fallback when not randomizing)' : 'Personality'}</span>
         <select value={form.personality} onChange={(e) => update('personality', e.target.value)}>
-          {PERSONALITIES.map((p) => (
+          {personalityOptions(personalities, form.personality).map((p) => (
             <option key={p} value={p}>
               {p}
             </option>
@@ -105,10 +112,7 @@ export default function AdminSettingsForm({ settings, onSave, saving }) {
         </select>
       </label>
 
-      <label className="field">
-        <span>Tone</span>
-        <input type="text" value={form.tone} onChange={(e) => update('tone', e.target.value)} />
-      </label>
+      <p className="muted">Tone: 3 random tones are picked per card from your tone list (managed below).</p>
 
       <label className="field field--check">
         <input

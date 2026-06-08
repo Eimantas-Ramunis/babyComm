@@ -39,6 +39,28 @@ async function request(path, { method = 'GET', body, admin = false } = {}) {
   return data;
 }
 
+// Multipart variant for file uploads. Sends FormData (no Content-Type so the browser sets the
+// multipart boundary) with the admin password header.
+async function requestForm(path, { method = 'POST', form } = {}) {
+  const res = await fetch(`/api${path}`, {
+    method,
+    headers: { 'x-admin-password': getStoredPassword() },
+    body: form,
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    // non-JSON response
+  }
+  if (!res.ok) {
+    const error = new Error(data?.error || `Request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
+  return data;
+}
+
 // Public
 export const getToday = () => request('/today');
 export const getHistory = () => request('/history');
@@ -70,6 +92,26 @@ export const setDeviceActive = (id, active) =>
   request(`/admin/devices/${id}`, { method: 'PATCH', body: { active }, admin: true });
 export const deleteDevice = (id) =>
   request(`/admin/devices/${id}`, { method: 'DELETE', admin: true });
+
+// Personalities + tones (admin)
+export const getPersonalities = () => request('/admin/personalities', { admin: true });
+export const addPersonality = (name) =>
+  request('/admin/personalities', { method: 'POST', body: { name }, admin: true });
+export const deletePersonality = (id) =>
+  request(`/admin/personalities/${id}`, { method: 'DELETE', admin: true });
+
+export const getTones = () => request('/admin/tones', { admin: true });
+export const addTone = (label) =>
+  request('/admin/tones', { method: 'POST', body: { label }, admin: true });
+export const deleteTone = (id) =>
+  request(`/admin/tones/${id}`, { method: 'DELETE', admin: true });
+
+// Memories (admin write; create/update are multipart for the optional image)
+export const createMemory = (form) => requestForm('/admin/memories', { method: 'POST', form });
+export const updateMemory = (id, form) =>
+  requestForm(`/admin/memories/${id}`, { method: 'PUT', form });
+export const deleteMemory = (id) =>
+  request(`/admin/memories/${id}`, { method: 'DELETE', admin: true });
 
 // Public push endpoints (no admin header).
 export const getVapidPublicKey = () => request('/push/vapid-public-key');

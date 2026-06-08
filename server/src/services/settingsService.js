@@ -47,6 +47,12 @@ export function updateSettings(patch) {
           : 0
         : current.auto_generate_enabled,
     auto_generate_time: patch.autoGenerateTime ?? current.auto_generate_time,
+    randomize_personality:
+      patch.randomizePersonality !== undefined
+        ? patch.randomizePersonality
+          ? 1
+          : 0
+        : current.randomize_personality,
     updated_at: new Date().toISOString(),
   };
 
@@ -64,6 +70,7 @@ export function updateSettings(patch) {
        gemini_image_model = @gemini_image_model,
        auto_generate_enabled = @auto_generate_enabled,
        auto_generate_time = @auto_generate_time,
+       randomize_personality = @randomize_personality,
        updated_at = @updated_at
      WHERE id = 1`,
   ).run(merged);

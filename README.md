@@ -104,8 +104,11 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
 - **Phase 1:** pregnancy engine, fallback cards, settings, history, memories, PWA shell.
 - **Phase 2:** web-push/VAPID with device upsert + auto-deactivate on 410; custom
   service-worker push handling + self-subscribe; per-minute scheduler with dedupe + master
-  switch; Gemini text + image generation configured via admin (masked key); Docker + Caddy +
-  DuckDNS deployment; expanded synthetic tests.
+  switch; Gemini text + image generation configured via admin (masked key); daily
+  pre-generation of tomorrow's card; Docker + Caddy + DuckDNS deployment; expanded tests.
+- **Phase 3:** admin-managed **personality** list with a randomize toggle (random per card or
+  pinned); admin-managed **tone** list (3 chosen at random per card); **memory editing** on the
+  Prisiminimai page (admin-gated) with one image upload + caption + an editable date-time.
 
 ## What's NOT implemented yet
 

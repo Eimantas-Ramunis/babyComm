@@ -8,8 +8,14 @@ const databasePath = process.env.DATABASE_PATH || './data/app.sqlite';
 export const dataDir = path.dirname(path.resolve(databasePath));
 export const uploadsDir = path.join(dataDir, 'uploads');
 export const cardsUploadDir = path.join(uploadsDir, 'cards');
+export const memoriesUploadDir = path.join(uploadsDir, 'memories');
 
 /** Public URL path served for a card image of the given date. */
 export function cardImageUrl(date) {
   return `/uploads/cards/${date}.png`;
+}
+
+/** Public URL path served for a memory image. */
+export function memoryImageUrl(filename) {
+  return `/uploads/memories/${filename}`;
 }

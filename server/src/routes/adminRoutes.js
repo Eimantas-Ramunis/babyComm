@@ -1,6 +1,9 @@
 // Admin endpoints. All require the x-admin-password header (adminAuth).
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { Router } from 'express';
+import multer from 'multer';
 import db from '../db/database.js';
 import { adminAuth } from '../middleware/adminAuth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
@@ -20,9 +23,19 @@ import {
   getMemories,
   createMemory,
   updateMemory,
+  setMemoryImage,
   deleteMemory,
 } from '../services/memoryService.js';
+import {
+  listPersonalities,
+  addPersonality,
+  deletePersonality,
+  listTones,
+  addTone,
+  deleteTone,
+} from '../services/lookupService.js';
 import { todayInTimezone, isValidDateString } from '../utils/dateUtils.js';
+import { memoriesUploadDir, memoryImageUrl } from '../utils/paths.js';
 import {
   serializeSettings,
   serializeCard,
@@ -35,6 +48,34 @@ router.use(adminAuth);
 
 // Throttle the expensive AI generation endpoints (spec §15).
 const generationLimiter = rateLimit({ windowMs: 60_000, max: 10 });
+
+const EXT_BY_MIME = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
+
+// In-memory upload for memory images: one image, <= 5 MB. Only the raster types we can map to a
+// safe extension are allowed (no SVG, which can carry script).
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (EXT_BY_MIME[file.mimetype]) cb(null, true);
+    else cb(new Error('Only PNG, JPEG, WebP, or GIF images are allowed.'));
+  },
+});
+
+// Persist a memory's uploaded image to disk and store its URL. Returns the updated memory.
+function saveMemoryImage(id, file) {
+  fs.mkdirSync(memoriesUploadDir, { recursive: true });
+  const ext = EXT_BY_MIME[file.mimetype] || 'img';
+  const filename = `memory-${id}.${ext}`;
+  fs.writeFileSync(path.join(memoriesUploadDir, filename), file.buffer);
+  return setMemoryImage(id, memoryImageUrl(filename));
+}
+
+function deleteImageFile(imageUrl) {
+  if (!imageUrl) return;
+  const filename = path.basename(imageUrl);
+  fs.rmSync(path.join(memoriesUploadDir, filename), { force: true });
+}
 
 // ---- Settings ----
 
@@ -83,6 +124,10 @@ router.put('/settings', (req, res) => {
   }
   if (autoGenerateTime !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(autoGenerateTime)) {
     return res.status(400).json({ error: 'autoGenerateTime must be HH:mm (24h).' });
+  }
+  const { randomizePersonality } = req.body ?? {};
+  if (randomizePersonality !== undefined && typeof randomizePersonality !== 'boolean') {
+    return res.status(400).json({ error: 'randomizePersonality must be a boolean.' });
   }
 
   res.json(serializeSettings(updateSettings(req.body ?? {})));
@@ -247,46 +292,111 @@ router.delete('/devices/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// ---- Memories ----
+// ---- Memories (multipart: optional `image` file + text fields) ----
+
+// Run multer and convert its errors (oversize / non-image) into 400s instead of 500s.
+function imageUpload(req, res, next) {
+  upload.single('image')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    return next();
+  });
+}
+
+function invalidMemoryAt(value) {
+  return value !== undefined && value !== '' && Number.isNaN(Date.parse(value));
+}
 
 router.get('/memories', (req, res) => {
   res.json(getMemories().map(serializeMemory));
 });
 
-router.post('/memories', (req, res) => {
-  const { memoryDate, title } = req.body ?? {};
-  if (!isValidDateString(memoryDate)) {
-    return res.status(400).json({ error: 'memoryDate must be a valid YYYY-MM-DD date.' });
-  }
+router.post('/memories', imageUpload, (req, res) => {
+  const { title, body, memoryAt } = req.body ?? {};
   if (typeof title !== 'string' || title.trim() === '') {
-    return res.status(400).json({ error: 'title must be a non-empty string.' });
+    return res.status(400).json({ error: 'title (caption) must be a non-empty string.' });
   }
-  res.status(201).json(serializeMemory(createMemory(req.body)));
+  if (invalidMemoryAt(memoryAt)) {
+    return res.status(400).json({ error: 'memoryAt must be a valid date-time.' });
+  }
+
+  let memory = createMemory({ title: title.trim(), body, memoryAt: memoryAt || undefined });
+  if (req.file) memory = saveMemoryImage(memory.id, req.file);
+  res.status(201).json(serializeMemory(memory));
 });
 
-router.put('/memories/:id', (req, res) => {
+// Treat an empty memoryAt string as "unchanged" so a blank/legacy date-time input does not
+// overwrite the stored timestamp with an invalid value.
+function normalizedMemoryInput(body) {
+  return { ...body, memoryAt: body.memoryAt || undefined };
+}
+
+router.put('/memories/:id', imageUpload, (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid memory id.' });
 
-  if (req.body?.memoryDate !== undefined && !isValidDateString(req.body.memoryDate)) {
-    return res.status(400).json({ error: 'memoryDate must be a valid YYYY-MM-DD date.' });
+  const { title, memoryAt } = req.body ?? {};
+  if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+    return res.status(400).json({ error: 'title (caption) must be a non-empty string.' });
   }
-  if (
-    req.body?.title !== undefined &&
-    (typeof req.body.title !== 'string' || req.body.title.trim() === '')
-  ) {
-    return res.status(400).json({ error: 'title must be a non-empty string.' });
+  if (invalidMemoryAt(memoryAt)) {
+    return res.status(400).json({ error: 'memoryAt must be a valid date-time.' });
   }
-  const updated = updateMemory(id, req.body ?? {});
+
+  let updated = updateMemory(id, normalizedMemoryInput(req.body ?? {}));
   if (!updated) return res.status(404).json({ error: 'Memory not found.' });
+  if (req.file) {
+    const oldImageUrl = updated.image_url;
+    // Write the new file FIRST so a write failure can't orphan a deleted original.
+    updated = saveMemoryImage(id, req.file);
+    if (oldImageUrl && oldImageUrl !== updated.image_url) deleteImageFile(oldImageUrl);
+  }
   res.json(serializeMemory(updated));
 });
 
 router.delete('/memories/:id', (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid memory id.' });
-  const ok = deleteMemory(id);
-  if (!ok) return res.status(404).json({ error: 'Memory not found.' });
+  const { deleted, imageUrl } = deleteMemory(id);
+  if (!deleted) return res.status(404).json({ error: 'Memory not found.' });
+  deleteImageFile(imageUrl);
+  res.json({ ok: true });
+});
+
+// ---- Personalities ----
+
+router.get('/personalities', (req, res) => res.json(listPersonalities()));
+
+router.post('/personalities', (req, res) => {
+  const { name } = req.body ?? {};
+  if (typeof name !== 'string' || name.trim() === '') {
+    return res.status(400).json({ error: 'name must be a non-empty string.' });
+  }
+  res.status(201).json(addPersonality(name));
+});
+
+router.delete('/personalities/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid personality id.' });
+  if (!deletePersonality(id)) return res.status(404).json({ error: 'Personality not found.' });
+  res.json({ ok: true });
+});
+
+// ---- Tones ----
+
+router.get('/tones', (req, res) => res.json(listTones()));
+
+router.post('/tones', (req, res) => {
+  const { label } = req.body ?? {};
+  if (typeof label !== 'string' || label.trim() === '') {
+    return res.status(400).json({ error: 'label must be a non-empty string.' });
+  }
+  res.status(201).json(addTone(label));
+});
+
+router.delete('/tones/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid tone id.' });
+  if (!deleteTone(id)) return res.status(404).json({ error: 'Tone not found.' });
   res.json({ ok: true });
 });
 

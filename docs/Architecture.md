@@ -71,9 +71,19 @@ the device inactive.
 
 ## Data model (SQLite)
 
-`settings` (single row; includes `notifications_enabled`, `gemini_*`), `daily_cards`
-(unique by `card_date`), `notification_schedules`, `push_devices` (unique by `endpoint`),
-`memories`, `app_config` (server-managed key/value, e.g. VAPID keys).
+`settings` (single row; includes `notifications_enabled`, `gemini_*`, `auto_generate_*`,
+`randomize_personality`), `daily_cards` (unique by `card_date`), `notification_schedules`,
+`push_devices` (unique by `endpoint`), `memories` (caption + body + `image_url` + editable
+`memory_at` date-time), `personalities` / `tones` (admin-managed lookup lists), `app_config`
+(server-managed key/value, e.g. VAPID keys).
+
+**Personality/tone selection:** on each AI card generation `cardService.buildAiTextContext`
+picks a random personality from the `personalities` table (when `randomize_personality` is on,
+else the pinned one) and 3 random tones from the `tones` table.
+
+**Memory editing:** the Prisiminimai page is public/read-only for mom; when the admin password is
+present it shows add/edit/delete with a single image upload (multipart via `multer`, image/* ≤5 MB,
+saved to `data/uploads/memories/`) and an editable `memory_at` timestamp.
 
 ## Security notes
 
