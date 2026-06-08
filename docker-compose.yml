@@ -20,29 +20,36 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=3000 # internal container port (do not change); the host port is APP_PORT below
       - DATABASE_PATH=/app/server/data/app.sqlite
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
-      - APP_BASE_URL=https://${DOMAIN}
+      - APP_BASE_URL=https://${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com) in .env}
       - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@example.com}
       # Optional: pin VAPID keys across rebuilds (otherwise auto-generated + persisted in the DB).
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
     volumes:
       - app-data:/app/server/data
-    expose:
-      - "3000"
+    # Publish the app on a host port (default 3001 to avoid a service already on 3000). Point your
+    # existing reverse proxy at http://<pi>:${APP_PORT} for HTTPS on your domain.
+    ports:
+      - "${APP_PORT:-3001}:3000"
 
+  # OPTIONAL bundled HTTPS — only if ports 80/443 are FREE on the host. Enable with:
+  #   docker compose --profile caddy up -d
+  # If you already run a reverse proxy (something is using 80/443), leave this OFF and route your
+  # proxy to http://<pi>:${APP_PORT} instead.
   caddy:
     image: caddy:2
     restart: unless-stopped
+    profiles: ["caddy"]
     depends_on:
       - app
     ports:
       - "80:80"
       - "443:443"
-    # Configure Caddy via its CLI (automatic HTTPS for DOMAIN, reverse-proxy to the app) instead
-    # of a bind-mounted Caddyfile — single-file bind mounts are unreliable in Portainer git stacks.
+    # Configure Caddy via its CLI (automatic HTTPS) instead of a bind-mounted Caddyfile —
+    # single-file bind mounts are unreliable in Portainer git stacks.
     command: caddy reverse-proxy --from ${DOMAIN:?set DOMAIN (e.g. baby.tplinkdns.com)} --to app:3000
     volumes:
       - caddy-data:/data
