@@ -11,6 +11,11 @@ import {
 
 const EMPTY = { name: '', type: 'daily', timeOfDay: '09:00', daysOfWeek: '', sendOnNewWeek: false };
 
+// Local, readable timestamp of the last fire (the stored value is a UTC ISO string).
+function formatLastRun(iso) {
+  return iso ? new Date(iso).toLocaleString() : 'never';
+}
+
 export default function ScheduleManager({ schedules, onChange, onResult }) {
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -55,6 +60,8 @@ export default function ScheduleManager({ schedules, onChange, onResult }) {
                 {s.daysOfWeek ? ` (days ${s.daysOfWeek})` : ' (every day)'}
                 {s.sendOnNewWeek ? ' · new-week only' : ''}
                 {s.enabled ? '' : ' · disabled'}
+                <br />
+                <small className="muted">Last sent: {formatLastRun(s.lastRunAt)}</small>
               </span>
               <span className="btn-row">
                 <button

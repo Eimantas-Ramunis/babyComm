@@ -72,6 +72,9 @@ export const updateSettings = (settings) =>
   request('/admin/settings', { method: 'PUT', body: settings, admin: true });
 export const generateTodayCard = () =>
   request('/admin/cards/generate-today', { method: 'POST', admin: true });
+export const getTomorrowCard = () => request('/admin/cards/tomorrow', { admin: true });
+export const generateTomorrowCard = () =>
+  request('/admin/cards/generate-tomorrow', { method: 'POST', admin: true });
 export const regenerateMessage = (date) =>
   request(`/admin/cards/${date}/regenerate-message`, { method: 'POST', admin: true });
 export const regenerateImage = (date) =>

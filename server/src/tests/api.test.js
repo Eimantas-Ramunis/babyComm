@@ -74,6 +74,36 @@ test('settings mask: setting a Gemini key reports set + last4, never the raw key
   assert.equal(put.body.geminiApiKey, undefined);
 });
 
+test('GET /api/admin/cards/tomorrow previews without creating; generate-tomorrow creates', async () => {
+  assert.equal((await request(app).get('/api/admin/cards/tomorrow')).status, 401);
+
+  const before = await request(app)
+    .get('/api/admin/cards/tomorrow')
+    .set('x-admin-password', 'test-secret');
+  assert.equal(before.status, 200);
+  assert.match(before.body.date, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(before.body.card, null, 'preview must not create a card');
+  assert.equal(typeof before.body.pregen.enabled, 'boolean');
+  assert.equal(before.body.pregen.ranToday, false);
+
+  // No Gemini key in tests -> a fallback card for tomorrow's date.
+  const gen = await request(app)
+    .post('/api/admin/cards/generate-tomorrow')
+    .set('x-admin-password', 'test-secret');
+  assert.equal(gen.status, 200);
+  assert.equal(gen.body.mode, 'fallback');
+  assert.equal(gen.body.card.date, before.body.date);
+
+  const after = await request(app)
+    .get('/api/admin/cards/tomorrow')
+    .set('x-admin-password', 'test-secret');
+  assert.equal(after.body.card.date, before.body.date);
+
+  // The future-dated card must not leak into history before its day arrives.
+  const history = await request(app).get('/api/history');
+  assert.ok(!history.body.some((c) => c.date === before.body.date));
+});
+
 test('personalities + tones admin endpoints require auth and round-trip', async () => {
   assert.equal((await request(app).get('/api/admin/personalities')).status, 401);
 

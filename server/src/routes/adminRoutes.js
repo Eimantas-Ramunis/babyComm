@@ -9,10 +9,12 @@ import { adminAuth } from '../middleware/adminAuth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { getSettings, updateSettings } from '../services/settingsService.js';
 import {
+  getCardByDate,
   generateCardForDate,
   generateMessageForDate,
   generateImageForDate,
 } from '../services/cardService.js';
+import { getLastPregenDate } from '../services/schedulerService.js';
 import {
   listDevices,
   removeDevice,
@@ -34,7 +36,7 @@ import {
   addTone,
   deleteTone,
 } from '../services/lookupService.js';
-import { todayInTimezone, isValidDateString } from '../utils/dateUtils.js';
+import { todayInTimezone, addDays, isValidDateString } from '../utils/dateUtils.js';
 import { memoriesUploadDir, memoryImageUrl } from '../utils/paths.js';
 import {
   serializeSettings,
@@ -142,6 +144,40 @@ router.post('/cards/generate-today', generationLimiter, async (req, res, next) =
     const settings = getSettings();
     const today = todayInTimezone(settings.timezone);
     const card = await generateCardForDate(today, { withImage: true });
+    res.json({ ok: true, mode: card.generation_status, card: serializeCard(card) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/admin/cards/tomorrow — preview tomorrow's pre-generated card WITHOUT creating one
+// (card is null until pre-generation or a manual generate has run), plus pre-gen status so the
+// admin can see whether tonight's run already happened.
+router.get('/cards/tomorrow', (req, res) => {
+  const settings = getSettings();
+  const today = todayInTimezone(settings.timezone);
+  const tomorrow = addDays(today, 1);
+  const lastPregenDate = getLastPregenDate();
+  res.json({
+    date: tomorrow,
+    card: serializeCard(getCardByDate(tomorrow)),
+    pregen: {
+      enabled: Boolean(settings.auto_generate_enabled),
+      time: settings.auto_generate_time,
+      lastPregenDate,
+      // The nightly job generates *tomorrow's* card and stamps *today's* date when done.
+      ranToday: lastPregenDate === today,
+    },
+  });
+});
+
+// POST /api/admin/cards/generate-tomorrow — generate tomorrow's card now (AI text + image with
+// a Gemini key, fallback otherwise), without waiting for the nightly pre-generation.
+router.post('/cards/generate-tomorrow', generationLimiter, async (req, res, next) => {
+  try {
+    const settings = getSettings();
+    const tomorrow = addDays(todayInTimezone(settings.timezone), 1);
+    const card = await generateCardForDate(tomorrow, { withImage: true });
     res.json({ ok: true, mode: card.generation_status, card: serializeCard(card) });
   } catch (err) {
     next(err);

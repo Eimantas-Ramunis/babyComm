@@ -22,7 +22,8 @@ import { logger } from '../utils/logger.js';
 const FALLBACK_MESSAGE =
   'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdingas.';
 
-function getCardByDate(date) {
+/** Read-only lookup: the card row for a date, or undefined. Never creates a fallback. */
+export function getCardByDate(date) {
   return db.prepare('SELECT * FROM daily_cards WHERE card_date = ?').get(date);
 }
 

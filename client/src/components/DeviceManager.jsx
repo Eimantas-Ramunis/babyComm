@@ -65,6 +65,11 @@ export default function DeviceManager({ devices, onChange, onResult }) {
               <span>
                 <strong>{d.deviceName || 'Unnamed device'}</strong>
                 {d.active ? '' : ' (inactive)'}
+                <br />
+                <small className="muted">
+                  Last push OK: {d.lastSuccessAt ? new Date(d.lastSuccessAt).toLocaleString() : 'never'}
+                  {d.lastFailureAt ? ` · last failure: ${new Date(d.lastFailureAt).toLocaleString()}` : ''}
+                </small>
               </span>
               <span className="btn-row">
                 <button

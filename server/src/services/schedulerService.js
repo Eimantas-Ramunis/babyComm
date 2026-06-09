@@ -16,9 +16,28 @@ import { logger } from '../utils/logger.js';
 
 const LAST_PREGEN_KEY = 'last_pregen_date';
 
+/** Local-date the daily pre-generation last completed on (null if never). */
+export function getLastPregenDate() {
+  return getConfig(LAST_PREGEN_KEY);
+}
+
+// How long after the scheduled minute a missed send is still delivered. Exact-minute matching
+// silently drops the day's notification whenever the matching tick is late or never runs — a
+// restart at that minute, or the same tick first awaiting the (slow) Gemini pre-generation.
+// Bounded so a schedule created/enabled hours past its time doesn't fire absurdly late.
+export const CATCHUP_WINDOW_MINUTES = 180;
+
+function minutesOfDay(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
 /**
  * Decide whether a schedule should fire right now. PURE and timezone-agnostic — all
  * time-sensitive values are passed in via `nowParts`, so this is fully unit-testable.
+ *
+ * Fires at-or-after the configured minute (within CATCHUP_WINDOW_MINUTES, same local day),
+ * deduped to once per calendar day — so a tick delayed past the exact minute still sends.
  *
  * @param schedule row from notification_schedules (snake_case)
  * @param nowParts { date:'YYYY-MM-DD', time:'HH:mm', dayOfWeek:0-6, gestationalWeek,
@@ -28,8 +47,9 @@ const LAST_PREGEN_KEY = 'last_pregen_date';
 export function shouldRunSchedule(schedule, nowParts) {
   if (!schedule.enabled) return false;
 
-  // Must match the configured minute.
-  if (schedule.time_of_day !== nowParts.time) return false;
+  // At-or-after the configured minute, within the catch-up window (never across midnight).
+  const lateBy = minutesOfDay(nowParts.time) - minutesOfDay(schedule.time_of_day);
+  if (lateBy < 0 || lateBy > CATCHUP_WINDOW_MINUTES) return false;
 
   // Day-of-week filter: CSV of 0-6 (0=Sunday). Empty/null = every day.
   if (schedule.days_of_week) {
@@ -170,10 +190,10 @@ let task = null;
 export function startScheduler() {
   if (task) return; // idempotent
   task = cron.schedule('* * * * *', async () => {
-    // Pre-generation and notification dispatch are independent; one failing must not block
-    // the other.
-    await pregenerateUpcomingCard().catch((err) => logger.error('Pre-generation failed:', err));
+    // Notifications first: pre-generation (Gemini text + image) can take minutes, and a due
+    // send must not wait behind it. Failures are independent; one must not block the other.
     await runDueSchedules().catch((err) => logger.error('Scheduler tick failed:', err));
+    await pregenerateUpcomingCard().catch((err) => logger.error('Pre-generation failed:', err));
   });
   logger.info('Notification scheduler started (every minute).');
 }

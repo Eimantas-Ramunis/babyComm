@@ -15,6 +15,7 @@ import {
 } from '../services/api.js';
 import AdminSettingsForm from '../components/AdminSettingsForm.jsx';
 import CardGenerator from '../components/CardGenerator.jsx';
+import TomorrowPreview from '../components/TomorrowPreview.jsx';
 import ScheduleManager from '../components/ScheduleManager.jsx';
 import DeviceManager from '../components/DeviceManager.jsx';
 import ListManager from '../components/ListManager.jsx';
@@ -169,6 +170,10 @@ export default function Admin() {
           onAdd={(label) => mutateList(() => addTone(label), getTones, setTones, 'Tone added.')}
           onDelete={(id) => mutateList(() => deleteTone(id), getTones, setTones, 'Tone removed.')}
         />
+      </section>
+
+      <section className="card">
+        <TomorrowPreview onResult={handleResult} />
       </section>
 
       <section className="card">

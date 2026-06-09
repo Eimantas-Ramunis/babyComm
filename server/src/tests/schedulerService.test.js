@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { shouldRunSchedule, shouldPregenerate } from '../services/schedulerService.js';
+import {
+  shouldRunSchedule,
+  shouldPregenerate,
+  CATCHUP_WINDOW_MINUTES,
+} from '../services/schedulerService.js';
 
 // Base schedule: enabled daily at 09:00, every day.
 function schedule(overrides = {}) {
@@ -31,8 +35,32 @@ test('fires when time matches and not yet run today', () => {
   assert.equal(shouldRunSchedule(schedule(), nowParts()), true);
 });
 
-test('does not fire when the minute does not match', () => {
-  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '09:01' })), false);
+test('does not fire before the scheduled minute', () => {
+  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '08:59' })), false);
+});
+
+test('catches up after the scheduled minute (delayed tick / restart), within the window', () => {
+  // a tick delayed past the exact minute still sends
+  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '09:01' })), true);
+  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '10:30' })), true);
+  // ...but not once already sent today
+  assert.equal(
+    shouldRunSchedule(schedule(), nowParts({ time: '10:30', lastRunDate: '2026-06-10' })),
+    false,
+  );
+});
+
+test('does not fire beyond the catch-up window', () => {
+  assert.ok(CATCHUP_WINDOW_MINUTES === 180);
+  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '12:00' })), true); // exactly 180
+  assert.equal(shouldRunSchedule(schedule(), nowParts({ time: '12:01' })), false);
+});
+
+test('catch-up never crosses midnight (late-evening schedule, after-midnight tick)', () => {
+  assert.equal(
+    shouldRunSchedule(schedule({ time_of_day: '23:30' }), nowParts({ time: '00:30' })),
+    false,
+  );
 });
 
 test('disabled schedule never fires', () => {

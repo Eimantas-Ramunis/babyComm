@@ -42,6 +42,13 @@ docker compose up -d
   notifications/homepage show the AI content, not the fallback. Needs a Gemini key; if a run
   falls back it retries a few times, then keeps the fallback for that day. To prepare a card
   immediately, use "Generate today's card".
+- **Tomorrow's card preview:** /admin → **"Tomorrow's card"** panel shows whether tonight's
+  pre-generation already ran, plus the exact notification text, homepage message, and image the
+  next day will use. "Generate tomorrow's card now" prepares/regenerates it on the spot.
+- **Did a notification actually go out?** /admin → each schedule shows a **"Last sent"**
+  timestamp and each device shows **"Last push OK / last failure"**. Schedules fire at-or-after
+  their time (3-hour same-day catch-up window), at most once per day — a restart or a slow
+  pre-generation run no longer makes the day's message silently skip.
 - **Personalities & tones:** /admin → manage the **Personalities** and **Tones** lists (add/remove).
   Toggle **"Randomize personality"** to pick a random one per card (or pin one). The generator
   always picks **3 random tones** per card from the tone list. Newly added entries are included
@@ -77,7 +84,8 @@ docker compose logs -f duckdns # DNS update status
 | Push test reports `0/N sent` | Subscriptions expired (410) → auto-deactivated | Re-subscribe devices on Home |
 | Notifications never arrive on phone | Not served over HTTPS, or master switch off | Confirm `https://<DOMAIN>`, master switch on |
 | HTTPS not working | Ports 80/443 not forwarded / DuckDNS IP stale | Check router forwarding + `duckdns` logs |
-| Scheduler not firing | Master switch off, or time/timezone mismatch | Verify schedule time vs `settings.timezone` |
+| Scheduler not firing | Master switch off, or time/timezone mismatch | Verify schedule time vs `settings.timezone`; check the schedule's "Last sent" in /admin |
+| Notification arrives hours late | App was down at the scheduled time; catch-up sent it on recovery | Expected (3 h window); check container uptime |
 
 ## Updating the app
 
