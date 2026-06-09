@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getToday } from '../services/api.js';
 import SubscribeButton from '../components/SubscribeButton.jsx';
+import InstallPrompt from '../components/InstallPrompt.jsx';
 
 const ORDINAL = ['—', '1-as', '2-as', '3-as'];
 
@@ -52,6 +53,7 @@ export default function Home() {
           <span className="floaty floaty--1" aria-hidden="true">💛</span>
           <span className="floaty floaty--2" aria-hidden="true">✨</span>
           <span className="floaty floaty--3" aria-hidden="true">🫧</span>
+          <span className="floaty floaty--4" aria-hidden="true">🤍</span>
 
           <span className="hero__badge">
             {gestationalWeek} savaitė<small>+{gestationalDay} d.</small>
@@ -85,6 +87,10 @@ export default function Home() {
 
       <div className="glow-in" style={{ '--delay': '0.24s' }}>
         <SubscribeButton />
+      </div>
+
+      <div className="glow-in" style={{ '--delay': '0.36s' }}>
+        <InstallPrompt />
       </div>
     </div>
   );

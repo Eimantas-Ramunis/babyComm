@@ -70,8 +70,11 @@ Admin endpoints require the header `x-admin-password: <ADMIN_PASSWORD>`. In the 
 - Toggle the **notifications master switch**.
 - **Generate today's card** (AI text + image when a key is set, otherwise a fallback card),
   and regenerate the message or image.
-- Manage **schedules** (create/enable/disable/delete) and **devices** (register this device,
-  send a test notification, enable/disable, remove).
+- **Preview tomorrow's card** — see whether the nightly pre-generation already ran and exactly
+  what tomorrow's notification/homepage/image will be, or generate it on the spot.
+- Manage **schedules** (create/enable/disable/delete; each shows when it last sent) and
+  **devices** (register this device, send a test notification, enable/disable, remove; each
+  shows its last successful/failed push).
 
 ## Push notifications (local testing)
 
@@ -109,11 +112,17 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
 - **Phase 3:** admin-managed **personality** list with a randomize toggle (random per card or
   pinned); admin-managed **tone** list (3 chosen at random per card); **memory editing** on the
   Prisiminimai page (admin-gated) with one image upload + caption + an editable date-time.
+- **Phase 4 (spec "Phase 7 — Polish"):** richer animations (page transitions, staggered
+  timelines, hero Ken-Burns zoom, badge heartbeat, swaying floaties, micro-interactions — all
+  CSS, disabled under reduced-motion) and a PWA **install prompt** (Chromium
+  `beforeinstallprompt` button + iOS "Add to Home Screen" hint, dismissible); **tomorrow's
+  card preview** in admin + schedule/device delivery timestamps; scheduler catch-up window so
+  a restart or slow pre-generation can't silently skip the day's notification.
 
 ## What's NOT implemented yet
 
-Special-event messages (F11), delivery-day mode (F12), richer polish/animations (Phase 7),
-memory image-upload UI. Real-phone push needs the HTTPS deployment.
+Special-event messages (F11), delivery-day mode (F12), multi-image memory galleries.
+Real-phone push needs the HTTPS deployment.
 
 ## Docs
 

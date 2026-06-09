@@ -1,10 +1,14 @@
 // History timeline: one entry per saved card, newest first.
 
+// Stagger entrance: each card enters slightly after the previous, capped so a long
+// history doesn't keep the bottom invisible for seconds.
+const stagger = (i) => ({ '--delay': `${Math.min(i, 8) * 0.07}s` });
+
 export default function Timeline({ cards }) {
   return (
     <ol className="timeline">
-      {cards.map((card) => (
-        <li key={card.date} className="timeline__item card">
+      {cards.map((card, i) => (
+        <li key={card.date} className="timeline__item card glow-in" style={stagger(i)}>
           <div className="timeline__head">
             <span className="timeline__date">{card.date}</span>
             <span className="timeline__week">

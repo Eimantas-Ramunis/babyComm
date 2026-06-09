@@ -145,8 +145,12 @@ export default function Memories() {
         </p>
       ) : (
         <ol className="timeline">
-          {memories.map((m) => (
-            <li key={m.id} className="timeline__item card">
+          {memories.map((m, i) => (
+            <li
+              key={m.id}
+              className="timeline__item card glow-in"
+              style={{ '--delay': `${Math.min(i, 8) * 0.07}s` }}
+            >
               {isAdmin && editingId === m.id ? (
                 <MemoryForm
                   initial={m}

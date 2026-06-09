@@ -59,6 +59,11 @@ body {
   font-weight: 700;
   font-size: 0.9rem;
   box-shadow: var(--shadow);
+  transition: transform 0.18s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-2px);
 }
 
 .nav-link--active {
@@ -303,6 +308,17 @@ body {
   background: var(--bg);
   color: var(--ink);
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: none;
 }
 
 .btn--primary {
@@ -423,6 +439,33 @@ body {
   border-top: 1.5px solid #f7ecdf;
 }
 
+/* ---- Tomorrow's card preview (admin) ---- */
+
+.tomorrow-preview {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 10px 0 14px;
+}
+
+.tomorrow-preview__img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.tomorrow-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tomorrow-preview__body p {
+  margin: 0;
+}
+
 /* ---- Phase 3: list manager chips, memory images ---- */
 
 .chip-list {
@@ -517,6 +560,9 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Slow "Ken Burns" drift so the AI image feels alive even while idle. */
+  animation: kenBurns 16s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 /* Animated gradient placeholder when no image is generated yet */
@@ -554,7 +600,10 @@ body {
   font-weight: 800;
   font-size: 1.05rem;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  animation: popIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+  /* Pop in once, then keep a soft heartbeat going. */
+  animation:
+    popIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) both,
+    softPulse 3.2s ease-in-out 1.6s infinite;
 }
 
 .hero__badge small {
@@ -575,6 +624,7 @@ body {
 .floaty--1 { left: 18%; animation-delay: 0.5s; }
 .floaty--2 { left: 50%; font-size: 1.2rem; animation-delay: 2.4s; }
 .floaty--3 { left: 76%; font-size: 1.9rem; animation-delay: 4s; }
+.floaty--4 { left: 33%; font-size: 1.1rem; animation-delay: 5.2s; animation-duration: 7s; }
 
 /* ---- Name + size ---- */
 
@@ -659,8 +709,10 @@ body {
 }
 
 .mood-chip {
-  background: linear-gradient(90deg, var(--accent-soft), var(--pink));
+  background: linear-gradient(90deg, var(--accent-soft), var(--pink), var(--accent-soft));
+  background-size: 200% 100%;
   color: #fff;
+  animation: gradientShift 6s ease infinite;
 }
 
 /* ---- Entrance animations ---- */
@@ -672,6 +724,37 @@ body {
 
 .hero--enter {
   animation: fadeInScale 0.7s ease both;
+}
+
+/* Every route change remounts the page container (keyed by pathname in App.jsx). */
+.page-enter {
+  animation: fadeInUp 0.35s ease both;
+}
+
+/* ---- Living header/footer + card micro-interactions ---- */
+
+.sprout {
+  display: inline-block;
+  animation: sway 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.beating {
+  display: inline-block;
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+.timeline__item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline__item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(249, 115, 22, 0.18);
+}
+
+.btn-row--center {
+  justify-content: center;
 }
 
 @keyframes floatY {
@@ -696,9 +779,35 @@ body {
 }
 
 @keyframes rise {
-  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
   15% { opacity: 0.9; }
-  100% { transform: translateY(-180px) scale(1.1); opacity: 0; }
+  40% { transform: translate(10px, -72px) scale(0.95); }
+  70% { transform: translate(-8px, -126px) scale(1.05); }
+  100% { transform: translate(6px, -180px) scale(1.1); opacity: 0; }
+}
+
+@keyframes kenBurns {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.08) translate(-1.5%, -1.5%); }
+}
+
+@keyframes softPulse {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.06); }
+  24% { transform: scale(1); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.25); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.18); }
+  56% { transform: scale(1); }
 }
 
 @keyframes fadeInUp {
@@ -716,11 +825,28 @@ body {
   .hero__art,
   .hero__emoji,
   .hero__placeholder,
+  .hero__img,
   .floaty,
   .hero__badge,
   .glow-in,
-  .hero--enter {
+  .hero--enter,
+  .page-enter,
+  .sprout,
+  .beating,
+  .mood-chip {
     animation: none !important;
   }
   .floaty { display: none; }
+  .nav-link,
+  .btn,
+  .pill,
+  .timeline__item {
+    transition: none;
+  }
+  .nav-link:hover,
+  .btn:not(:disabled):hover,
+  .pill:hover,
+  .timeline__item:hover {
+    transform: none;
+  }
 }
