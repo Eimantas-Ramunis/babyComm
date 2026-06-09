@@ -118,6 +118,11 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
   `beforeinstallprompt` button + iOS "Add to Home Screen" hint, dismissible); **tomorrow's
   card preview** in admin + schedule/device delivery timestamps; scheduler catch-up window so
   a restart or slow pre-generation can't silently skip the day's notification.
+- **Phase 5:** size/development data covers the **whole pregnancy (weeks 4–42)** — size +
+  fact change weekly by design; the AI message changes daily. Each AI generation also weaves
+  in **one random funny twist** (fruit fun fact, week-development fact from the model's own
+  knowledge, dad joke, womb-news report, cheeky promise, or pun), voiced to match the randomly
+  picked personality + tones.
 
 ## What's NOT implemented yet
 

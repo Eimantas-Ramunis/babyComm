@@ -53,7 +53,18 @@ export function validateMessage(obj) {
   };
 }
 
-function buildPrompt(ctx) {
+// Funny-twist styles: one is picked at random per generation (cardService) and the model
+// weaves it into the homepage message in the baby's voice. Anything factual must be TRUE.
+export const FUN_TWISTS = [
+  'a real, surprising fun fact about the fruit/vegetable used for this week\'s size comparison',
+  'a real fun fact about what the baby is developing, learning, or able to do around this gestational week',
+  'a lighthearted dad joke about pregnancy, babies, or this week\'s fruit',
+  'a playful "news report from inside the womb" — the baby reporting on life in his cozy home',
+  'a cheeky promise or friendly warning about what is coming soon (kicking, hiccups, somersaults, cravings)',
+  'a tiny pun or wordplay involving this week\'s fruit or the baby\'s current size',
+];
+
+export function buildPrompt(ctx) {
   const recent = (ctx.recentMessages || []).filter(Boolean).slice(0, 5).join('\n- ');
   return `You are generating a private pregnancy update from an unborn baby to his/her mother.
 
@@ -70,9 +81,10 @@ Context:
 Baby nickname: ${ctx.babyNickname}
 Gestational age: week ${ctx.week}, day ${ctx.day}
 Current size comparison: ${ctx.sizeLabel}
-Development fact: ${ctx.developmentFact}
+Development fact (hint only — see rules): ${ctx.developmentFact}
 Personality: ${ctx.personality}
 Tone preset: ${ctx.tone}
+Funny twist for today: ${ctx.funTwist || FUN_TWISTS[0]}
 Previous recent messages (avoid repeating these):
 - ${recent || '(none yet)'}
 
@@ -89,7 +101,15 @@ Rules:
 - Write ALL text values (title, shortNotification, homepageMessage, mood) in LITHUANIAN.
   Use natural, warm, grammatically correct Lithuanian. Keep the JSON keys in English.
 - shortNotification max ${MAX_NOTIFICATION_CHARS} characters.
-- homepageMessage should be 2-5 sentences.
+- homepageMessage should be 3-6 sentences.
+- Weave EXACTLY ONE instance of today's funny twist naturally into homepageMessage — never
+  as a detached "fun fact:" line, but as something the baby himself would say (e.g. "I caught
+  the wifi here and Google says I'll start kicking soon — better buy me a football!").
+  Voice it to match the Personality and Tone preset above.
+- Anything stated as a fact (about the fruit or the baby's development) must be TRUE for this
+  gestational week. Use your own knowledge of week ${ctx.week} development — the provided
+  development fact is only a hint, not a script. Cute and funny, but factual; no invented
+  medical claims.
 - Write as if the baby is speaking directly to mom ("mama").
 - Do not include markdown.
 - Keep it personal, cozy, and memorable.`;
@@ -97,7 +117,8 @@ Rules:
 
 /**
  * Generate a baby message via Gemini. Throws on any failure (caller handles fallback).
- * @param ctx { apiKey, model, babyNickname, week, day, sizeLabel, developmentFact, personality, tone, recentMessages }
+ * @param ctx { apiKey, model, babyNickname, week, day, sizeLabel, developmentFact, personality,
+ *               tone, funTwist, recentMessages }
  */
 export async function generateMessage(ctx) {
   if (!ctx.apiKey) throw new Error('No Gemini API key configured.');

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import db from '../db/database.js';
 import { getSettings } from './settingsService.js';
 import { getPregnancyStatus } from './pregnancyService.js';
-import { generateMessage } from './aiTextService.js';
+import { generateMessage, FUN_TWISTS } from './aiTextService.js';
 import { generateImage } from './aiImageService.js';
 import {
   listPersonalities,
@@ -137,14 +137,17 @@ function resolvePersonality(settings, override) {
 }
 
 // Assemble the AI text-generation context from settings + (already-computed) status.
-// 3 random tones are chosen each time; personality is shared with the image when provided.
+// 3 random tones and 1 random funny-twist style are chosen each time; personality is shared
+// with the image when provided.
 function buildAiTextContext(settings, status, personality) {
   const tones = randomTones(listTones(), 3);
   const tone = tones.length ? tones.join(', ') : settings.tone;
+  const funTwist = FUN_TWISTS[Math.floor(Math.random() * FUN_TWISTS.length)];
 
-  logger.debug(`AI context: personality="${personality}", tones="${tone}"`);
+  logger.debug(`AI context: personality="${personality}", tones="${tone}", twist="${funTwist}"`);
 
   return {
+    funTwist,
     apiKey: settings.gemini_api_key,
     model: settings.gemini_text_model,
     babyNickname: settings.baby_nickname,

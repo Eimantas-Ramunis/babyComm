@@ -57,11 +57,22 @@ test('trimester reflected in status', () => {
   assert.equal(status.trimester, 2);
 });
 
-test('size data falls back safely for out-of-range weeks', () => {
-  const fallback = getSizeForWeek(40);
-  assert.equal(typeof fallback.sizeLabel, 'string');
-  assert.ok(fallback.sizeLabel.length > 0);
+test('size data covers every week of the pregnancy (4-42), no fallback gaps', () => {
+  const fallbackLabel = getSizeForWeek(99).sizeLabel;
+  for (let week = 4; week <= 42; week++) {
+    const { sizeLabel, developmentFact } = getSizeForWeek(week);
+    assert.notEqual(sizeLabel, fallbackLabel, `week ${week} must have a real size label`);
+    assert.ok(developmentFact.length > 0, `week ${week} must have a development fact`);
+  }
   assert.equal(getSizeForWeek(13).sizeLabel, 'citrinos'); // Lithuanian (genitive: "citrinos dydžio")
+});
+
+test('size data falls back safely for out-of-range weeks', () => {
+  for (const week of [0, 3, 43]) {
+    const fallback = getSizeForWeek(week);
+    assert.equal(typeof fallback.sizeLabel, 'string');
+    assert.ok(fallback.sizeLabel.length > 0);
+  }
 });
 
 test('due-date-passed behavior', () => {
