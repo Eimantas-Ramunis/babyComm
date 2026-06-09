@@ -11,5 +11,8 @@ data/
 *.sqlite-shm
 *.sqlite-wal
 
+# Local backup tarballs (default BACKUP_DIR of the compose backup sidecar)
+backups/
+
 .DS_Store
 *.log

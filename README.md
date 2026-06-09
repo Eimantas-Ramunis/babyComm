@@ -130,7 +130,10 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
   reveal screen («Labas, mama. Atvykau. ❤️»), stops card generation, notifications, and nightly
   pre-generation; past the due date (not yet arrived) the homepage shows an "any moment now"
   banner and messages switch to excited anticipation. Plus **automated backups**: a `backup`
-  sidecar tars the `app-data` volume daily into `BACKUP_DIR` with rotation (`BACKUP_KEEP`).
+  sidecar tars the `app-data` volume daily into `BACKUP_DIR` with rotation (`BACKUP_KEEP`),
+  and a `syncthing` service replicates the tarballs to another LAN machine — no cloud
+  (setup + restore drill in [`docs/Maintenance.md`](docs/Maintenance.md)). The `app` container
+  also has a `/api/health` healthcheck.
 
 ## What's NOT implemented yet
 

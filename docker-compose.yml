@@ -1,9 +1,11 @@
 # Baby Growth PWA — production stack for a Raspberry Pi (deploy via Portainer).
 #
 # Services:
-#   app     — the PWA (server serves built client + API on :3000), HTTP only.
-#   caddy   — reverse proxy that terminates HTTPS (auto Let's Encrypt) for your DOMAIN.
-#   duckdns — OPTIONAL DuckDNS updater (only if you use DuckDNS). Behind the "duckdns" profile.
+#   app       — the PWA (server serves built client + API on :3000), HTTP only.
+#   caddy     — reverse proxy that terminates HTTPS (auto Let's Encrypt) for your DOMAIN.
+#   backup    — nightly tarball of app-data into BACKUP_DIR (rotated, BACKUP_KEEP).
+#   syncthing — replicates BACKUP_DIR to another LAN machine (see docs/Maintenance.md).
+#   duckdns   — OPTIONAL DuckDNS updater (only if you use DuckDNS). Behind the "duckdns" profile.
 #
 # DDNS: if your ROUTER updates the DDNS record (e.g. TP-Link tplinkdns.com), you do NOT need the
 #       duckdns service — just `docker compose up -d` (starts app + caddy). For DuckDNS, run
@@ -34,6 +36,13 @@ services:
     # existing reverse proxy at http://<pi>:${APP_PORT} for HTTPS on your domain.
     ports:
       - "${APP_PORT:-3001}:3000"
+    # Node 22 has global fetch, so no curl/wget is needed in the image.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # Bundled HTTPS. Caddy serves TLS on container port 443, published on the host as HTTPS_PORT
   # (default 8443, so it won't clash with anything already on the host's 80/443 — common on a Pi
@@ -78,6 +87,27 @@ services:
         sleep 86400;
       done'
 
+  # Replicates the BACKUP_DIR tarballs to another machine on the LAN (e.g. a Windows box)
+  # via Syncthing — peer-to-peer, no cloud. Pair it once with the other device's Syncthing
+  # and share the "backups" folder as Send Only. Full setup guide: docs/Maintenance.md
+  # ("Off-Pi backups to a Windows machine"). GUI: http://<pi>:${SYNCTHING_GUI_PORT:-8384}.
+  syncthing:
+    image: syncthing/syncthing:1
+    restart: unless-stopped
+    hostname: babycomm-pi
+    environment:
+      # Run as root so it can read the tarballs the (root) backup sidecar writes.
+      - PUID=0
+      - PGID=0
+    volumes:
+      - syncthing-config:/var/syncthing/config
+      - ${BACKUP_DIR:-./backups}:/var/syncthing/backups
+    ports:
+      - "${SYNCTHING_GUI_PORT:-8384}:8384" # web UI (LAN only — set a GUI password!)
+      - "22000:22000/tcp" # sync protocol
+      - "22000:22000/udp"
+      - "21027:21027/udp" # local discovery
+
   # OPTIONAL — only for DuckDNS users. Start with: docker compose --profile duckdns up -d
   # TP-Link (tplinkdns.com) users: leave this off; the router updates DDNS itself.
   duckdns:
@@ -94,3 +124,4 @@ volumes:
   app-data:
   caddy-data:
   caddy-config:
+  syncthing-config:
