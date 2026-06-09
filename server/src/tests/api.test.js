@@ -151,6 +151,56 @@ test('POST /api/admin/memories rejects a non-image upload', async () => {
   assert.equal(res.status, 400);
 });
 
+test('replies: validate, create, surface on /api/today and /api/history, admin delete', async () => {
+  // Validation: empty and too-long bodies are rejected.
+  assert.equal((await request(app).post('/api/replies').send({ body: '   ' })).status, 400);
+  assert.equal(
+    (await request(app).post('/api/replies').send({ body: 'x'.repeat(1001) })).status,
+    400,
+  );
+  assert.equal(
+    (await request(app).post('/api/replies').send({ body: 'ok', cardDate: '2099-01-01' })).status,
+    400,
+    'future cardDate rejected',
+  );
+
+  const created = await request(app).post('/api/replies').send({ body: 'Labas, mažyli! 💛' });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.reply.body, 'Labas, mažyli! 💛');
+  assert.equal(created.body.replies.length, 1);
+
+  // Visible on today's payload and on the matching history card.
+  const today = await request(app).get('/api/today');
+  assert.equal(today.body.replies.length, 1);
+  assert.equal(today.body.replies[0].body, 'Labas, mažyli! 💛');
+
+  const history = await request(app).get('/api/history');
+  const todayCard = history.body.find((c) => c.date === today.body.date);
+  assert.equal(todayCard.replies.length, 1);
+
+  // Admin delete requires auth, then removes it.
+  const id = created.body.reply.id;
+  assert.equal((await request(app).delete(`/api/admin/replies/${id}`)).status, 401);
+  const del = await request(app)
+    .delete(`/api/admin/replies/${id}`)
+    .set('x-admin-password', 'test-secret');
+  assert.equal(del.status, 200);
+  assert.equal((await request(app).get('/api/today')).body.replies.length, 0);
+});
+
+test('kicks: increments accumulate and surface on /api/today', async () => {
+  const first = await request(app).post('/api/kicks');
+  assert.equal(first.status, 200);
+  assert.equal(first.body.count, 1);
+
+  const second = await request(app).post('/api/kicks');
+  assert.equal(second.body.count, 2);
+
+  const today = await request(app).get('/api/today');
+  assert.equal(today.body.kicks.count, 2);
+  assert.equal(today.body.kicks.date, today.body.date);
+});
+
 test('delivery-day mode: birth settings round-trip and /api/today reveal payload', async () => {
   // Invalid birth time is rejected.
   const badTime = await request(app)

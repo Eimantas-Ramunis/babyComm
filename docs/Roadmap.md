@@ -14,7 +14,7 @@ emotional value and dependency. Each phase gets its own `PhaseNPlan.md` before i
   volume (DB + all images) to a host folder with rotation; docs cover pointing it at a USB
   drive / network mount and syncing off the Pi. Everything precious lives on one SD card today.
 
-## Phase 7 — Two-way: mom answers the baby
+## Phase 7 — Two-way: mom answers the baby  ✅ planned: [Phase7Plan.md](Phase7Plan.md)
 
 - **Replies.** A reply box under the daily message; replies stored per card and shown in
   History as a conversation. Recent replies are fed into the AI context so the baby can

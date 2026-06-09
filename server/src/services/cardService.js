@@ -15,6 +15,8 @@ import {
   randomPersonality,
   randomTones,
 } from './lookupService.js';
+import { getRecentReplies } from './replyService.js';
+import { getLatestKicks } from './kickService.js';
 import { todayInTimezone } from '../utils/dateUtils.js';
 import { cardsUploadDir, cardImageUrl } from '../utils/paths.js';
 import { logger } from '../utils/logger.js';
@@ -156,6 +158,8 @@ function buildAiTextContext(settings, status, personality) {
   return {
     funTwist,
     awaitingArrival: status.isDueDatePassed,
+    momReplies: getRecentReplies(5),
+    kicks: getLatestKicks(),
     apiKey: settings.gemini_api_key,
     model: settings.gemini_text_model,
     babyNickname: settings.baby_nickname,

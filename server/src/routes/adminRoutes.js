@@ -36,6 +36,7 @@ import {
   addTone,
   deleteTone,
 } from '../services/lookupService.js';
+import { deleteReply } from '../services/replyService.js';
 import { todayInTimezone, addDays, isValidDateString } from '../utils/dateUtils.js';
 import { memoriesUploadDir, memoryImageUrl } from '../utils/paths.js';
 import {
@@ -411,6 +412,15 @@ router.delete('/memories/:id', (req, res) => {
   const { deleted, imageUrl } = deleteMemory(id);
   if (!deleted) return res.status(404).json({ error: 'Memory not found.' });
   deleteImageFile(imageUrl);
+  res.json({ ok: true });
+});
+
+// ---- Replies (created publicly on the site; admin can clean up typos/mistakes) ----
+
+router.delete('/replies/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid reply id.' });
+  if (!deleteReply(id)) return res.status(404).json({ error: 'Reply not found.' });
   res.json({ ok: true });
 });
 

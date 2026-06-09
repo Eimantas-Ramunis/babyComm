@@ -3,6 +3,11 @@ import { getToday } from '../services/api.js';
 import SubscribeButton from '../components/SubscribeButton.jsx';
 import InstallPrompt from '../components/InstallPrompt.jsx';
 import ArrivalScreen from '../components/ArrivalScreen.jsx';
+import ReplyBox from '../components/ReplyBox.jsx';
+import KickCounter from '../components/KickCounter.jsx';
+
+// Movement is commonly first felt around weeks 18-22; show the counter a bit early.
+const KICK_COUNTER_FROM_WEEK = 18;
 
 const ORDINAL = ['—', '1-as', '2-as', '3-as'];
 
@@ -97,11 +102,21 @@ export default function Home() {
         {mood && <span className="chip mood-chip">nuotaika: {mood}</span>}
       </section>
 
-      <div className="glow-in" style={{ '--delay': '0.24s' }}>
+      <div className="glow-in" style={{ '--delay': '0.2s' }}>
+        <ReplyBox initialReplies={today.replies || []} />
+      </div>
+
+      {gestationalWeek >= KICK_COUNTER_FROM_WEEK && (
+        <div className="glow-in" style={{ '--delay': '0.28s' }}>
+          <KickCounter initialKicks={today.kicks} />
+        </div>
+      )}
+
+      <div className="glow-in" style={{ '--delay': '0.36s' }}>
         <SubscribeButton />
       </div>
 
-      <div className="glow-in" style={{ '--delay': '0.36s' }}>
+      <div className="glow-in" style={{ '--delay': '0.44s' }}>
         <InstallPrompt />
       </div>
     </div>

@@ -134,6 +134,11 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
   and a `syncthing` service replicates the tarballs to another LAN machine — no cloud
   (setup + restore drill in [`docs/Maintenance.md`](docs/Maintenance.md)). The `app` container
   also has a `/api/health` healthcheck.
+- **Phase 7:** the app becomes **two-way** — mom can **reply to the baby** under the daily
+  message (replies shown as conversation bubbles on Home + Istorija; recent replies are fed
+  into the AI context so the baby can answer back in the next message; admin can delete a
+  reply), and a **kick counter** ("Spyrė! ⚽", shown from week 18) whose latest daily count
+  the AI may playfully reference.
 
 ## What's NOT implemented yet
 

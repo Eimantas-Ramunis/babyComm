@@ -65,6 +65,9 @@ async function requestForm(path, { method = 'POST', form } = {}) {
 export const getToday = () => request('/today');
 export const getHistory = () => request('/history');
 export const getMemories = () => request('/memories');
+export const sendReply = (body) => request('/replies', { method: 'POST', body: { body } });
+export const addKick = () => request('/kicks', { method: 'POST', body: {} });
+export const deleteReply = (id) => request(`/admin/replies/${id}`, { method: 'DELETE', admin: true });
 
 // Admin
 export const getSettings = () => request('/admin/settings', { admin: true });

@@ -66,6 +66,7 @@ export const FUN_TWISTS = [
 
 export function buildPrompt(ctx) {
   const recent = (ctx.recentMessages || []).filter(Boolean).slice(0, 5).join('\n- ');
+  const momReplies = (ctx.momReplies || []).filter(Boolean).slice(0, 5).join('\n- ');
   return `You are generating a private pregnancy update from an unborn baby to his/her mother.
 
 Tone:
@@ -89,7 +90,15 @@ ${
   ctx.awaitingArrival
     ? 'Special situation: the due date has passed — the baby could arrive ANY moment now. Write with joyful, excited anticipation about finally meeting mom very soon (packing bags, rehearsing the first hello). Never scary, never about being "late" in a worrying way.\n'
     : ''
-}Previous recent messages (avoid repeating these):
+}${
+    momReplies
+      ? `Recent replies FROM MOM to earlier messages (newest first):\n- ${momReplies}\n`
+      : ''
+  }${
+    ctx.kicks
+      ? `Kick counter: mom counted ${ctx.kicks.count} kick(s) on ${ctx.kicks.date}.\n`
+      : ''
+  }Previous recent messages (avoid repeating these):
 - ${recent || '(none yet)'}
 
 Return ONLY valid JSON with this structure:
@@ -114,6 +123,11 @@ Rules:
   gestational week. Use your own knowledge of week ${ctx.week} development — the provided
   development fact is only a hint, not a script. Cute and funny, but factual; no invented
   medical claims.
+- If recent replies from mom are listed above, you MAY warmly react to or reference ONE of
+  them when it fits naturally (answer her question, thank her, tease back). Never quote her
+  robotically, never mention "replies" as a feature — it is just a conversation.
+- If a kick count is listed, you may playfully reference it when it fits (training, football,
+  somersaults) — at most one mention.
 - Write as if the baby is speaking directly to mom ("mama").
 - Do not include markdown.
 - Keep it personal, cozy, and memorable.`;

@@ -89,6 +89,23 @@ CREATE TABLE IF NOT EXISTS tones (
   label TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL
 );
+
+-- Phase 7: mom's replies to the daily message (a conversation, multiple per day).
+CREATE TABLE IF NOT EXISTS replies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  card_date TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_replies_card_date ON replies(card_date);
+
+-- Phase 7: kick counter — one aggregate row per local calendar day.
+CREATE TABLE IF NOT EXISTS kicks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kick_date TEXT NOT NULL UNIQUE,
+  count INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
 `;
 
 const PERSONALITY_SEED = [

@@ -715,6 +715,94 @@ body {
   animation: gradientShift 6s ease infinite;
 }
 
+/* ---- Phase 7: mom's replies + kick counter ---- */
+
+.reply-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reply-list--history {
+  margin: 10px 0 0;
+}
+
+.reply-bubble {
+  align-self: flex-end;
+  max-width: 85%;
+  background: linear-gradient(135deg, #ffedd5, #ffe4e6);
+  border-radius: 16px 16px 4px 16px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reply-bubble__who {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pink);
+}
+
+.reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reply-form textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1.5px solid #f0e2d6;
+  border-radius: var(--radius-sm);
+  background: #fffdfb;
+  resize: vertical;
+}
+
+.reply-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.reply-form .btn {
+  align-self: flex-end;
+}
+
+.kick-counter {
+  text-align: center;
+}
+
+.kick-counter__count {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+}
+
+.kick-counter__count strong {
+  color: var(--accent);
+  font-size: 1.5rem;
+}
+
+.kick-counter__btn {
+  font-size: 1.2rem;
+  padding: 14px 30px;
+}
+
+.kick-counter__btn--pulse {
+  animation: kickPulse 0.3s ease;
+}
+
+@keyframes kickPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
 /* ---- Delivery-day mode: awaiting banner + arrival reveal ---- */
 
 .awaiting-banner {
@@ -888,7 +976,8 @@ body {
   .sprout,
   .beating,
   .mood-chip,
-  .arrival__hero {
+  .arrival__hero,
+  .kick-counter__btn--pulse {
     animation: none !important;
   }
   .floaty { display: none; }

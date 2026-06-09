@@ -21,6 +21,16 @@ export default function Timeline({ cards }) {
             {card.sizeLabel && <span className="chip">dydis: {card.sizeLabel}</span>}
             {card.mood && <span className="chip">nuotaika: {card.mood}</span>}
           </div>
+          {card.replies?.length > 0 && (
+            <ul className="reply-list reply-list--history">
+              {card.replies.map((r) => (
+                <li key={r.id} className="reply-bubble">
+                  <span className="reply-bubble__who">Mama</span>
+                  {r.body}
+                </li>
+              ))}
+            </ul>
+          )}
         </li>
       ))}
     </ol>

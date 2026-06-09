@@ -17,6 +17,15 @@ export function serializeCard(card) {
   };
 }
 
+export function serializeReply(reply) {
+  return {
+    id: reply.id,
+    cardDate: reply.card_date,
+    body: reply.body,
+    createdAt: reply.created_at,
+  };
+}
+
 export function serializeMemory(memory) {
   if (!memory) return null;
   return {
