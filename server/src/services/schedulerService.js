@@ -88,6 +88,7 @@ function markScheduleRun(id, isoNow) {
 export async function runDueSchedules(now = new Date()) {
   const settings = getSettings();
   if (!settings.notifications_enabled) return { skipped: 'notifications_disabled' };
+  if (settings.baby_arrived) return { skipped: 'baby_arrived' }; // delivery-day mode: no more daily pings
 
   const parts = nowPartsInTimezone(settings.timezone, now);
   const status = getPregnancyStatus(settings, parts.date);
@@ -130,6 +131,7 @@ export async function runDueSchedules(now = new Date()) {
  * date we last pre-generated on.
  */
 export function shouldPregenerate(settings, parts, lastPregenDate) {
+  if (settings.baby_arrived) return false; // delivery-day mode: nothing left to pre-generate
   if (!settings.auto_generate_enabled) return false;
   if (!settings.auto_generate_time) return false;
   if (parts.time < settings.auto_generate_time) return false; // not yet time today

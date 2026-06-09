@@ -53,6 +53,14 @@ export function updateSettings(patch) {
           ? 1
           : 0
         : current.randomize_personality,
+    // Delivery-day mode (F12). Empty strings clear a field; undefined leaves it unchanged.
+    baby_arrived:
+      patch.babyArrived !== undefined ? (patch.babyArrived ? 1 : 0) : current.baby_arrived,
+    birth_date: patch.birthDate !== undefined ? patch.birthDate || null : current.birth_date,
+    birth_time: patch.birthTime !== undefined ? patch.birthTime || null : current.birth_time,
+    birth_weight:
+      patch.birthWeight !== undefined ? patch.birthWeight || null : current.birth_weight,
+    birth_name: patch.birthName !== undefined ? patch.birthName || null : current.birth_name,
     updated_at: new Date().toISOString(),
   };
 
@@ -71,6 +79,11 @@ export function updateSettings(patch) {
        auto_generate_enabled = @auto_generate_enabled,
        auto_generate_time = @auto_generate_time,
        randomize_personality = @randomize_personality,
+       baby_arrived = @baby_arrived,
+       birth_date = @birth_date,
+       birth_time = @birth_time,
+       birth_weight = @birth_weight,
+       birth_name = @birth_name,
        updated_at = @updated_at
      WHERE id = 1`,
   ).run(merged);

@@ -150,3 +150,51 @@ test('POST /api/admin/memories rejects a non-image upload', async () => {
     .attach('image', Buffer.from('hello'), { filename: 'note.txt', contentType: 'text/plain' });
   assert.equal(res.status, 400);
 });
+
+test('delivery-day mode: birth settings round-trip and /api/today reveal payload', async () => {
+  // Invalid birth time is rejected.
+  const badTime = await request(app)
+    .put('/api/admin/settings')
+    .set('x-admin-password', 'test-secret')
+    .send({ birthTime: '25:99' });
+  assert.equal(badTime.status, 400);
+
+  // Flip into arrived mode with the full birth record.
+  const put = await request(app)
+    .put('/api/admin/settings')
+    .set('x-admin-password', 'test-secret')
+    .send({
+      babyArrived: true,
+      birthName: 'Jonas',
+      birthDate: '2026-12-20',
+      birthTime: '08:45',
+      birthWeight: '3 540 g',
+    });
+  assert.equal(put.status, 200);
+  assert.equal(put.body.babyArrived, true);
+  assert.equal(put.body.birthName, 'Jonas');
+  assert.equal(put.body.birthDate, '2026-12-20');
+  assert.equal(put.body.birthTime, '08:45');
+  assert.equal(put.body.birthWeight, '3 540 g');
+
+  // Public /api/today switches to the reveal payload, with no daily card.
+  const today = await request(app).get('/api/today');
+  assert.equal(today.status, 200);
+  assert.equal(today.body.babyArrived, true);
+  assert.equal(today.body.birth.name, 'Jonas');
+  assert.equal(today.body.birth.date, '2026-12-20');
+  assert.equal(today.body.homepageMessage, undefined, 'no card in arrived mode');
+
+  // Reset so later tests (and re-runs) see normal mode again.
+  const reset = await request(app)
+    .put('/api/admin/settings')
+    .set('x-admin-password', 'test-secret')
+    .send({ babyArrived: false });
+  assert.equal(reset.status, 200);
+  assert.equal(reset.body.babyArrived, false);
+
+  const back = await request(app).get('/api/today');
+  assert.equal(back.status, 200);
+  assert.equal(back.body.babyArrived, false);
+  assert.ok(back.body.homepageMessage, 'daily card is back after reset');
+});

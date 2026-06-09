@@ -85,7 +85,11 @@ Development fact (hint only — see rules): ${ctx.developmentFact}
 Personality: ${ctx.personality}
 Tone preset: ${ctx.tone}
 Funny twist for today: ${ctx.funTwist || FUN_TWISTS[0]}
-Previous recent messages (avoid repeating these):
+${
+  ctx.awaitingArrival
+    ? 'Special situation: the due date has passed — the baby could arrive ANY moment now. Write with joyful, excited anticipation about finally meeting mom very soon (packing bags, rehearsing the first hello). Never scary, never about being "late" in a worrying way.\n'
+    : ''
+}Previous recent messages (avoid repeating these):
 - ${recent || '(none yet)'}
 
 Return ONLY valid JSON with this structure:

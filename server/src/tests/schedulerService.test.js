@@ -138,3 +138,11 @@ test('pregenerate respects the enabled flag', () => {
     false,
   );
 });
+
+test('pregenerate never fires once the baby has arrived', () => {
+  // Otherwise due: enabled, past the configured time, not yet run today.
+  assert.equal(
+    shouldPregenerate(pregenSettings({ baby_arrived: 1 }), nowParts({ time: '21:00' }), null),
+    false,
+  );
+});

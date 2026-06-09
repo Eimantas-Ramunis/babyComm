@@ -131,6 +131,22 @@ router.put('/settings', (req, res) => {
   if (randomizePersonality !== undefined && typeof randomizePersonality !== 'boolean') {
     return res.status(400).json({ error: 'randomizePersonality must be a boolean.' });
   }
+  // Delivery-day mode (F12).
+  const { babyArrived, birthDate, birthTime, birthWeight, birthName } = req.body ?? {};
+  if (babyArrived !== undefined && typeof babyArrived !== 'boolean') {
+    return res.status(400).json({ error: 'babyArrived must be a boolean.' });
+  }
+  if (birthDate != null && birthDate !== '' && !isValidDateString(birthDate)) {
+    return res.status(400).json({ error: 'birthDate must be a valid YYYY-MM-DD date or null.' });
+  }
+  if (birthTime != null && birthTime !== '' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(birthTime)) {
+    return res.status(400).json({ error: 'birthTime must be HH:mm (24h) or null.' });
+  }
+  for (const [field, val] of Object.entries({ birthWeight, birthName })) {
+    if (val !== undefined && val !== null && typeof val !== 'string') {
+      return res.status(400).json({ error: `${field} must be a string or null.` });
+    }
+  }
 
   res.json(serializeSettings(updateSettings(req.body ?? {})));
 });

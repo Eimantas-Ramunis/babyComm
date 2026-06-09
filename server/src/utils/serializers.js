@@ -46,6 +46,11 @@ export function serializeSettings(settings) {
     autoGenerateEnabled: Boolean(settings.auto_generate_enabled),
     autoGenerateTime: settings.auto_generate_time,
     randomizePersonality: Boolean(settings.randomize_personality),
+    babyArrived: Boolean(settings.baby_arrived),
+    birthDate: settings.birth_date,
+    birthTime: settings.birth_time,
+    birthWeight: settings.birth_weight,
+    birthName: settings.birth_name,
     geminiTextModel: settings.gemini_text_model,
     geminiImageModel: settings.gemini_image_model,
     // Never expose the raw key. Report only whether it is set + the last 4 chars.

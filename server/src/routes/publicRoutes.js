@@ -11,8 +11,24 @@ import { serializeCard, serializeMemory } from '../utils/serializers.js';
 const router = Router();
 
 // GET /api/today — current pregnancy status + today's card (fallback if none).
+// Delivery-day mode (F12): once the baby has arrived, the reveal payload replaces the
+// daily card entirely (no more pregnancy cards are created).
 router.get('/today', (req, res) => {
   const settings = getSettings();
+
+  if (settings.baby_arrived) {
+    return res.json({
+      babyArrived: true,
+      babyNickname: settings.baby_nickname,
+      birth: {
+        name: settings.birth_name,
+        date: settings.birth_date,
+        time: settings.birth_time,
+        weight: settings.birth_weight,
+      },
+    });
+  }
+
   const today = todayInTimezone(settings.timezone);
   const status = getPregnancyStatus(settings, today);
   // Reuse the already-computed today/settings so the card describes the same day as
@@ -20,11 +36,13 @@ router.get('/today', (req, res) => {
   const card = getOrCreateCardForDate(today, settings);
 
   res.json({
+    babyArrived: false,
     babyNickname: settings.baby_nickname,
     // Derive trimester from the card's week so the displayed week and trimester always agree.
     trimester: trimesterForWeek(card.gestational_week),
     daysRemaining: status.daysRemaining,
     isDueDatePassed: status.isDueDatePassed,
+    awaitingArrival: status.isDueDatePassed,
     ...serializeCard(card),
   });
 });

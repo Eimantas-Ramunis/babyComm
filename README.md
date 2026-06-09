@@ -75,6 +75,8 @@ Admin endpoints require the header `x-admin-password: <ADMIN_PASSWORD>`. In the 
 - Manage **schedules** (create/enable/disable/delete; each shows when it last sent) and
   **devices** (register this device, send a test notification, enable/disable, remove; each
   shows its last successful/failed push).
+- **Delivery day 🎉** — tick *Baby has arrived* + birth name/date/time/weight to switch the
+  homepage to the reveal screen and stop notifications/pre-generation (untick to undo).
 
 ## Push notifications (local testing)
 
@@ -123,10 +125,16 @@ cd server && npm test   # unit + supertest integration (no network/Gemini calls)
   in **one random funny twist** (fruit fun fact, week-development fact from the model's own
   knowledge, dad joke, womb-news report, cheeky promise, or pun), voiced to match the randomly
   picked personality + tones.
+- **Phase 6:** **delivery-day mode (F12)** — /admin gets a "Delivery day 🎉" fieldset (*Baby has
+  arrived* + birth name/date/time/weight); flipping it turns the homepage into a celebratory
+  reveal screen («Labas, mama. Atvykau. ❤️»), stops card generation, notifications, and nightly
+  pre-generation; past the due date (not yet arrived) the homepage shows an "any moment now"
+  banner and messages switch to excited anticipation. Plus **automated backups**: a `backup`
+  sidecar tars the `app-data` volume daily into `BACKUP_DIR` with rotation (`BACKUP_KEEP`).
 
 ## What's NOT implemented yet
 
-Special-event messages (F11), delivery-day mode (F12), multi-image memory galleries.
+Special-event messages (F11), multi-image memory galleries.
 Real-phone push needs the HTTPS deployment.
 
 ## Docs

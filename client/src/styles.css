@@ -715,6 +715,60 @@ body {
   animation: gradientShift 6s ease infinite;
 }
 
+/* ---- Delivery-day mode: awaiting banner + arrival reveal ---- */
+
+.awaiting-banner {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  color: var(--accent);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 10px 18px;
+  box-shadow: var(--shadow);
+}
+
+.arrival {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: center;
+}
+
+.arrival__hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #fdba74, #fb7185, #f9a8d4, #fdba74);
+  background-size: 300% 300%;
+  animation: gradientShift 9s ease infinite;
+  box-shadow: 0 18px 50px rgba(249, 115, 22, 0.28);
+  overflow: hidden;
+}
+
+.arrival__heart {
+  font-size: clamp(4rem, 24vw, 7rem);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15));
+}
+
+.arrival__hello {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 4px 0 8px;
+}
+
+.arrival__sub {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.pill-row--wrap {
+  flex-wrap: wrap;
+}
+
 /* ---- Entrance animations ---- */
 
 .glow-in {
@@ -833,7 +887,8 @@ body {
   .page-enter,
   .sprout,
   .beating,
-  .mood-chip {
+  .mood-chip,
+  .arrival__hero {
     animation: none !important;
   }
   .floaty { display: none; }

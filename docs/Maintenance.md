@@ -29,6 +29,33 @@ docker compose up -d
 
 (Volume name is `<project>_app-data`; check with `docker volume ls`.)
 
+## Automated backups
+
+The `backup` service in `docker-compose.yml` (plain alpine, no build) runs alongside the app and
+writes a tarball of the whole `app-data` volume **once a day**:
+
+- Tarballs land in `BACKUP_DIR` on the host (default `./backups` next to the compose file) as
+  `babycomm-<timestamp>.tgz`.
+- Rotation: only the newest `BACKUP_KEEP` files are kept (default 14); older ones are deleted.
+- The volume is mounted **read-only**, and the DB + its `-wal`/`-shm` files are tarred together —
+  consistent with the WAL rule in "Backup & restore" above.
+
+**Strongly recommended:** point `BACKUP_DIR` at a USB drive or network mount (e.g.
+`BACKUP_DIR=/mnt/usb/babycomm-backups` in the stack `.env`). Backups written to the Pi's own SD
+card die with the SD card — which is exactly the failure they exist for.
+
+For true off-Pi copies, sync the folder from the host with a cron job, e.g. `rclone`:
+
+```bash
+# crontab -e (on the Pi): sync backups to a cloud remote every morning at 06:30
+30 6 * * * rclone sync /mnt/usb/babycomm-backups remote:babycomm-backups
+```
+
+(`scp`/`rsync` to another machine works just as well.)
+
+**Restore:** pick a tarball and run the restore command from "Backup & restore" above, pointing
+it at the chosen `babycomm-<timestamp>.tgz`.
+
 ## Routine tasks
 
 - **Rotate the Gemini API key:** /admin → AI (Gemini) → paste a new key → Save. The old key is
@@ -56,6 +83,10 @@ docker compose up -d
 - **Memories:** on the **Prisiminimai** page (while logged in as admin) add/edit/delete memories
   with an image, caption, and an editable date-time. Images are stored under
   `data/uploads/memories/` on the `app-data` volume (covered by the backup above).
+- **Delivery-day mode:** /admin → **Delivery day 🎉** → tick *Baby has arrived* and fill in the
+  birth name/date/time/weight. The homepage becomes the celebratory reveal screen, no more
+  pregnancy cards are generated, and scheduled notifications + nightly pre-generation stop.
+  Unticking the checkbox restores the normal app.
 - **Pause all notifications:** /admin → turn off the **notifications master switch**. Schedules
   remain but won't fire.
 - **Disable a specific schedule/device:** /admin → Schedules / Devices → Disable.

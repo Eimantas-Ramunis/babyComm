@@ -24,6 +24,11 @@ export default function AdminSettingsForm({ settings, personalities = [], onSave
     geminiTextModel: settings.geminiTextModel || '',
     geminiImageModel: settings.geminiImageModel || '',
     geminiApiKey: '', // never prefilled; only sent if the user types a new key
+    babyArrived: settings.babyArrived ?? false,
+    birthName: settings.birthName || '',
+    birthDate: settings.birthDate || '',
+    birthTime: settings.birthTime || '',
+    birthWeight: settings.birthWeight || '',
   });
 
   function update(field, value) {
@@ -45,6 +50,11 @@ export default function AdminSettingsForm({ settings, personalities = [], onSave
       autoGenerateTime: form.autoGenerateTime,
       geminiTextModel: form.geminiTextModel,
       geminiImageModel: form.geminiImageModel,
+      babyArrived: form.babyArrived,
+      birthName: form.birthName,
+      birthDate: form.birthDate,
+      birthTime: form.birthTime,
+      birthWeight: form.birthWeight,
     };
     // Only include the key when the admin actually entered one (avoids wiping it on save).
     if (form.geminiApiKey.trim()) payload.geminiApiKey = form.geminiApiKey.trim();
@@ -172,6 +182,50 @@ export default function AdminSettingsForm({ settings, personalities = [], onSave
             value={form.geminiImageModel}
             placeholder="gemini-2.5-flash-image"
             onChange={(e) => update('geminiImageModel', e.target.value)}
+          />
+        </label>
+      </fieldset>
+
+      <fieldset className="fieldset">
+        <legend>Delivery day 🎉</legend>
+        <label className="field field--check">
+          <input
+            type="checkbox"
+            checked={form.babyArrived}
+            onChange={(e) => update('babyArrived', e.target.checked)}
+          />
+          <span>Baby has arrived (homepage becomes the reveal screen; notifications stop)</span>
+        </label>
+        <label className="field">
+          <span>Birth name (shown on the reveal; nickname used if empty)</span>
+          <input
+            type="text"
+            value={form.birthName}
+            onChange={(e) => update('birthName', e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Birth date</span>
+          <input
+            type="date"
+            value={form.birthDate}
+            onChange={(e) => update('birthDate', e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Birth time</span>
+          <input
+            type="time"
+            value={form.birthTime}
+            onChange={(e) => update('birthTime', e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Birth weight (free text, e.g. “3 540 g”)</span>
+          <input
+            type="text"
+            value={form.birthWeight}
+            onChange={(e) => update('birthWeight', e.target.value)}
           />
         </label>
       </fieldset>

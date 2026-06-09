@@ -57,6 +57,27 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
+  # Nightly backup of the app-data volume (DB + all images) into BACKUP_DIR on the host
+  # (default ./backups next to this file), keeping the newest BACKUP_KEEP files. WAL-safe:
+  # the DB and its -wal/-shm files are tarred together, per the runbook's backup rule.
+  # For real safety point BACKUP_DIR at a USB drive / network mount — see docs/Maintenance.md.
+  backup:
+    image: alpine:3
+    restart: unless-stopped
+    volumes:
+      - app-data:/data:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+    environment:
+      - BACKUP_KEEP=${BACKUP_KEEP:-14}
+    command: >
+      sh -c 'while true; do
+        ts=$$(date +%Y-%m-%d_%H%M);
+        tar czf /backups/babycomm-$$ts.tgz -C /data . &&
+        echo "backup written: babycomm-$$ts.tgz";
+        ls -1t /backups/babycomm-*.tgz 2>/dev/null | tail -n +$$((BACKUP_KEEP+1)) | xargs -r rm -f;
+        sleep 86400;
+      done'
+
   # OPTIONAL — only for DuckDNS users. Start with: docker compose --profile duckdns up -d
   # TP-Link (tplinkdns.com) users: leave this off; the router updates DDNS itself.
   duckdns:

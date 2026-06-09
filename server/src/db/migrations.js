@@ -138,6 +138,13 @@ function applyColumnUpgrades() {
   addColumnIfMissing('settings', 'randomize_personality', 'randomize_personality INTEGER DEFAULT 1');
   addColumnIfMissing('memories', 'memory_at', 'memory_at TEXT');
 
+  // Phase 6: delivery-day mode (F12) — birth details set by the admin when baby arrives.
+  addColumnIfMissing('settings', 'baby_arrived', 'baby_arrived INTEGER DEFAULT 0');
+  addColumnIfMissing('settings', 'birth_date', 'birth_date TEXT');
+  addColumnIfMissing('settings', 'birth_time', 'birth_time TEXT');
+  addColumnIfMissing('settings', 'birth_weight', 'birth_weight TEXT');
+  addColumnIfMissing('settings', 'birth_name', 'birth_name TEXT');
+
   // Phase 2 push: dedupe devices by subscription endpoint.
   addColumnIfMissing('push_devices', 'endpoint', 'endpoint TEXT');
   db.exec(

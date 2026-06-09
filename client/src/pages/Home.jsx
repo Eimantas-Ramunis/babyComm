@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getToday } from '../services/api.js';
 import SubscribeButton from '../components/SubscribeButton.jsx';
 import InstallPrompt from '../components/InstallPrompt.jsx';
+import ArrivalScreen from '../components/ArrivalScreen.jsx';
 
 const ORDINAL = ['—', '1-as', '2-as', '3-as'];
 
@@ -21,6 +22,11 @@ export default function Home() {
   if (error) return <p className="status status--error">Nepavyko įkelti: {error}</p>;
   if (!today) return <p className="status">Kraunama šiandienos naujiena…</p>;
 
+  // Delivery-day mode: the reveal screen replaces the daily card entirely.
+  if (today.babyArrived) {
+    return <ArrivalScreen babyNickname={today.babyNickname} birth={today.birth} />;
+  }
+
   const {
     babyNickname,
     gestationalWeek,
@@ -38,6 +44,12 @@ export default function Home() {
 
   return (
     <div className="home">
+      {today.awaitingArrival && (
+        <p className="awaiting-banner glow-in">
+          Lagaminai sukrauti — galiu atvykti bet kurią akimirką! 🎒💛
+        </p>
+      )}
+
       {/* Big animated hero image */}
       <section className="hero hero--enter">
         <div className="hero__art">

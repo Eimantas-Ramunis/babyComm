@@ -22,6 +22,10 @@ import { logger } from '../utils/logger.js';
 const FALLBACK_MESSAGE =
   'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdingas.';
 
+// Overdue (due date passed, baby not yet arrived): awaiting-arrival variant.
+const AWAITING_MESSAGE =
+  'Labas, mama. Lagaminai sukrauti — galiu atvykti bet kurią akimirką. Susitiksim jau visai greitai! 💛';
+
 /** Read-only lookup: the card row for a date, or undefined. Never creates a fallback. */
 export function getCardByDate(date) {
   return db.prepare('SELECT * FROM daily_cards WHERE card_date = ?').get(date);
@@ -30,16 +34,19 @@ export function getCardByDate(date) {
 /** Build fallback card content for a date from pregnancy status. */
 function buildFallbackContent(date, settings) {
   const status = getPregnancyStatus(settings, date);
+  const awaiting = status.isDueDatePassed;
   return {
     card_date: date,
     gestational_week: status.gestationalWeek,
     gestational_day: status.gestationalDay,
     size_label: status.sizeLabel,
     development_fact: status.developmentFact,
-    title: `${status.gestationalWeek} savaitė`,
-    short_notification: `Labas mama, šiandien esu maždaug ${status.sizeLabel} dydžio. 💛`,
-    homepage_message: FALLBACK_MESSAGE,
-    mood: 'jaukus',
+    title: awaiting ? 'Jau bet kurią akimirką!' : `${status.gestationalWeek} savaitė`,
+    short_notification: awaiting
+      ? 'Labas mama, ruošiuosi kelionei pas tave! 🎒💛'
+      : `Labas mama, šiandien esu maždaug ${status.sizeLabel} dydžio. 💛`,
+    homepage_message: awaiting ? AWAITING_MESSAGE : FALLBACK_MESSAGE,
+    mood: awaiting ? 'nekantrus' : 'jaukus',
     image_url: null,
     image_prompt: null,
     generation_status: 'fallback',
@@ -148,6 +155,7 @@ function buildAiTextContext(settings, status, personality) {
 
   return {
     funTwist,
+    awaitingArrival: status.isDueDatePassed,
     apiKey: settings.gemini_api_key,
     model: settings.gemini_text_model,
     babyNickname: settings.baby_nickname,
