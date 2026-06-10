@@ -171,6 +171,8 @@ docker compose logs -f duckdns # DNS update status
 | No image on the card | Image gen failed or no key | Regenerate image in /admin; check logs; image is optional |
 | Push test reports `0/N sent` | Subscriptions expired (410) → auto-deactivated | Re-subscribe devices on Home |
 | Notifications never arrive on phone | Not served over HTTPS, or master switch off | Confirm `https://<DOMAIN>`, master switch on |
+| Logs show `EAI_AGAIN fcm.googleapis.com`, `0/N sent` | DNS on the Pi was briefly down at send time (router/Pi-hole restart) | Auto-retried every minute within the 3 h catch-up window; if it recurs daily at the same time, check what restarts your DNS then |
+| Notification arrives only when phone is unlocked | Phone was dozing; push was sent with normal urgency (older builds) | Fixed: sends use `urgency: high` + 12 h TTL, which wakes a dozing device |
 | HTTPS not working | Ports 80/443 not forwarded / DuckDNS IP stale | Check router forwarding + `duckdns` logs |
 | Scheduler not firing | Master switch off, or time/timezone mismatch | Verify schedule time vs `settings.timezone`; check the schedule's "Last sent" in /admin |
 | Notification arrives hours late | App was down at the scheduled time; catch-up sent it on recovery | Expected (3 h window); check container uptime |

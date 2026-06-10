@@ -111,13 +111,24 @@ export async function runDueSchedules(now = new Date()) {
 
     logger.info(`Scheduler firing schedule id=${schedule.id} "${schedule.name}" at ${parts.time}`);
     const card = getOrCreateTodayCard(); // text-only/fast; never blocks on image generation
-    await sendToAllActiveDevices({
+    const summary = await sendToAllActiveDevices({
       title: settings.baby_nickname,
       body: card.short_notification,
       url: '/',
     });
-    markScheduleRun(schedule.id, now.toISOString());
-    fired.push(schedule.id);
+
+    // Mark the schedule as run only when delivery actually happened (or can't happen).
+    // A transient total failure — e.g. a DNS blip at send time (EAI_AGAIN) — leaves the
+    // schedule unmarked so the next minute's tick retries within the catch-up window.
+    const undeliverable = summary.total === 0 || summary.results.every((r) => r.deactivated);
+    if (summary.sent > 0 || undeliverable) {
+      markScheduleRun(schedule.id, now.toISOString());
+      fired.push(schedule.id);
+    } else {
+      logger.warn(
+        `Schedule id=${schedule.id}: 0/${summary.total} delivered (transient failures); will retry next tick.`,
+      );
+    }
   }
 
   if (fired.length) logger.debug(`Scheduler fired: ${fired.join(', ')}`);

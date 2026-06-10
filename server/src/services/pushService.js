@@ -120,10 +120,15 @@ function markFailure(id, { deactivate }) {
  * Send a push payload to one device row. Returns {ok, deactivated}.
  * On a 'gone' subscription the device is deactivated so we stop trying it.
  */
+// Delivery options: 'high' urgency tells FCM/APNs to wake a dozing phone immediately
+// (default 'normal' may be deferred for hours on a locked device); TTL caps how long an
+// undelivered message waits at the push service — a daily note is stale after 12 hours.
+const SEND_OPTIONS = { TTL: 43_200, urgency: 'high' };
+
 export async function sendToDevice(device, payload) {
   try {
     const subscription = JSON.parse(device.subscription_json);
-    await webpush.sendNotification(subscription, JSON.stringify(payload));
+    await webpush.sendNotification(subscription, JSON.stringify(payload), SEND_OPTIONS);
     markSuccess(device.id);
     logger.debug(`Push sent to device id=${device.id}`);
     return { ok: true, deactivated: false };

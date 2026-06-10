@@ -69,16 +69,22 @@ test('sendToDevice deactivates the device on a 410 Gone', async (t) => {
   assert.equal(after.active, 0);
 });
 
-test('sendToDevice records success on a 2xx send', async (t) => {
+test('sendToDevice records success on a 2xx send and sends with high urgency + TTL', async (t) => {
   const endpoint = 'https://push.example.com/ok';
   pushService.registerDevice({ subscription: { endpoint }, deviceName: 'Live' });
   const device = db.prepare('SELECT * FROM push_devices WHERE endpoint = ?').get(endpoint);
 
-  t.mock.method(webpush, 'sendNotification', () => Promise.resolve({ statusCode: 201 }));
+  const mocked = t.mock.method(webpush, 'sendNotification', () => Promise.resolve({ statusCode: 201 }));
 
   const result = await pushService.sendToDevice(device, { title: 't', body: 'b' });
   assert.equal(result.ok, true);
   const after = db.prepare('SELECT last_success_at, active FROM push_devices WHERE id = ?').get(device.id);
   assert.ok(after.last_success_at);
   assert.equal(after.active, 1);
+
+  // 'high' urgency wakes a dozing phone (default 'normal' can be deferred for hours);
+  // TTL keeps a stale daily note from arriving a day late.
+  const options = mocked.mock.calls[0].arguments[2];
+  assert.equal(options.urgency, 'high');
+  assert.ok(Number.isInteger(options.TTL) && options.TTL > 0);
 });

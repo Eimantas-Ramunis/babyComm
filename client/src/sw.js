@@ -32,9 +32,48 @@ self.addEventListener('push', (event) => {
     body: payload.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
+    // One stable tag: a retried/duplicate daily send replaces the previous notification
+    // instead of stacking; renotify still buzzes for the replacement.
+    tag: 'babycomm-daily',
+    renotify: true,
     data: { url: payload.url || '/' },
   };
   event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Browsers rotate push subscriptions (key/endpoint expiry). Without this handler the device
+// silently stops receiving until someone manually re-subscribes — so re-subscribe with the
+// same VAPID key and register the fresh subscription with the server automatically.
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      let applicationServerKey = event.oldSubscription?.options?.applicationServerKey;
+      if (!applicationServerKey) {
+        const res = await fetch('/api/push/vapid-public-key');
+        const { publicKey } = await res.json();
+        applicationServerKey = urlBase64ToUint8Array(publicKey);
+      }
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+      await fetch('/api/push/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: subscription.toJSON(),
+          deviceName: 'Re-subscribed automatically',
+        }),
+      });
+    })(),
+  );
 });
 
 // Focus an existing window or open a new one on click.
