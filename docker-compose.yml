@@ -95,8 +95,12 @@ services:
     image: syncthing/syncthing:1
     restart: unless-stopped
     hostname: babycomm-pi
+    # The image defaults to UID 1000, which can neither write the root-owned config volume
+    # nor read the tarballs the (root) backup sidecar writes — it crash-loops with
+    # "chmod /var/syncthing/config: operation not permitted". Start as root; the entrypoint
+    # honors PUID/PGID only when the container starts as root.
+    user: "0:0"
     environment:
-      # Run as root so it can read the tarballs the (root) backup sidecar writes.
       - PUID=0
       - PGID=0
     volumes:

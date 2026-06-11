@@ -66,10 +66,13 @@ Because the Pi keeps ~2 weeks, the Windows machine only needs to be on occasiona
 
 ### One-time setup — Windows side (Docker Desktop)
 
-1. Start Syncthing (PowerShell):
+1. Start Syncthing (PowerShell). `--user root` is required: the image defaults to UID 1000,
+   which cannot initialize the root-owned config volume (symptom: a crash loop of
+   `chmod /var/syncthing/config: operation not permitted` / `cert.pem: permission denied`):
 
    ```powershell
-   docker run -d --name syncthing --restart unless-stopped `
+   docker run -d --name syncthing --restart unless-stopped --user root `
+     -e PUID=0 -e PGID=0 `
      -p 8384:8384 -p 22000:22000/tcp -p 22000:22000/udp -p 21027:21027/udp `
      -v D:\Backups\babycomm:/var/syncthing/backups `
      -v syncthing-config:/var/syncthing/config `
@@ -77,7 +80,9 @@ Because the Pi keeps ~2 weeks, the Windows machine only needs to be on occasiona
    ```
 
    (Pick any folder you like instead of `D:\Backups\babycomm`. `--restart unless-stopped` +
-   Docker Desktop starting at boot = it is always running when the machine is on.)
+   Docker Desktop starting at boot = it is always running when the machine is on. If you
+   already started a crash-looping container without `--user root`, replace it:
+   `docker rm -f syncthing`, then rerun the command above — the volume can stay.)
 2. Open `http://localhost:8384`, set a GUI password here too.
 3. Pair the devices: on each GUI, **Add Remote Device** with the other side's Device ID
    (**Actions → Show ID**). If they don't auto-discover each other, edit the remote device and
