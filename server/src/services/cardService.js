@@ -21,12 +21,24 @@ import { todayInTimezone } from '../utils/dateUtils.js';
 import { cardsUploadDir, cardImageUrl } from '../utils/paths.js';
 import { logger } from '../utils/logger.js';
 
-const FALLBACK_MESSAGE =
-  'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdingas.';
+// Lithuanian adjectives are gendered, so the canned texts come in girl/boy/neutral variants.
+const FALLBACK_MESSAGES = {
+  girl: 'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdinga.',
+  boy: 'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad esu jau labai įspūdingas.',
+  unknown: 'Labas, mama. Šiandien paaugau dar truputį. Tėtis sako, kad augu tikrai įspūdingai.',
+};
 
-// Overdue (due date passed, baby not yet arrived): awaiting-arrival variant.
+// Overdue (due date passed, baby not yet arrived): awaiting-arrival variant (gender-neutral).
 const AWAITING_MESSAGE =
   'Labas, mama. Lagaminai sukrauti — galiu atvykti bet kurią akimirką. Susitiksim jau visai greitai! 💛';
+
+const AWAITING_MOODS = { girl: 'nekantri', boy: 'nekantrus', unknown: 'nekantrus' };
+
+function genderKey(settings) {
+  return settings.baby_gender === 'girl' || settings.baby_gender === 'boy'
+    ? settings.baby_gender
+    : 'unknown';
+}
 
 /** Read-only lookup: the card row for a date, or undefined. Never creates a fallback. */
 export function getCardByDate(date) {
@@ -47,8 +59,8 @@ function buildFallbackContent(date, settings) {
     short_notification: awaiting
       ? 'Labas mama, ruošiuosi kelionei pas tave! 🎒💛'
       : `Labas mama, šiandien esu maždaug ${status.sizeLabel} dydžio. 💛`,
-    homepage_message: awaiting ? AWAITING_MESSAGE : FALLBACK_MESSAGE,
-    mood: awaiting ? 'nekantrus' : 'jaukus',
+    homepage_message: awaiting ? AWAITING_MESSAGE : FALLBACK_MESSAGES[genderKey(settings)],
+    mood: awaiting ? AWAITING_MOODS[genderKey(settings)] : 'jaukus',
     image_url: null,
     image_prompt: null,
     generation_status: 'fallback',
@@ -158,6 +170,7 @@ function buildAiTextContext(settings, status, personality) {
   return {
     funTwist,
     awaitingArrival: status.isDueDatePassed,
+    babyGender: settings.baby_gender,
     momReplies: getRecentReplies(5),
     kicks: getLatestKicks(),
     apiKey: settings.gemini_api_key,
@@ -228,6 +241,7 @@ export async function generateImageForDate(date, settings = getSettings(), perso
       model: settings.gemini_image_model,
       sizeLabel: status.sizeLabel,
       personality: resolvePersonality(settings, personality),
+      gender: settings.baby_gender,
     });
     fs.mkdirSync(cardsUploadDir, { recursive: true });
     const filePath = `${cardsUploadDir}/${date}.png`;

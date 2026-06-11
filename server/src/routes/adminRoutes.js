@@ -132,6 +132,10 @@ router.put('/settings', (req, res) => {
   if (randomizePersonality !== undefined && typeof randomizePersonality !== 'boolean') {
     return res.status(400).json({ error: 'randomizePersonality must be a boolean.' });
   }
+  const { babyGender } = req.body ?? {};
+  if (babyGender !== undefined && babyGender !== null && !['', 'girl', 'boy'].includes(babyGender)) {
+    return res.status(400).json({ error: "babyGender must be 'girl', 'boy', or null." });
+  }
   // Delivery-day mode (F12).
   const { babyArrived, birthDate, birthTime, birthWeight, birthName } = req.body ?? {};
   if (babyArrived !== undefined && typeof babyArrived !== 'boolean') {

@@ -201,6 +201,29 @@ test('kicks: increments accumulate and surface on /api/today', async () => {
   assert.equal(today.body.kicks.date, today.body.date);
 });
 
+test('baby gender setting: validates and round-trips; lookup additions seeded', async () => {
+  const bad = await request(app)
+    .put('/api/admin/settings')
+    .set('x-admin-password', 'test-secret')
+    .send({ babyGender: 'dragon' });
+  assert.equal(bad.status, 400);
+
+  const put = await request(app)
+    .put('/api/admin/settings')
+    .set('x-admin-password', 'test-secret')
+    .send({ babyGender: 'girl' });
+  assert.equal(put.status, 200);
+  assert.equal(put.body.babyGender, 'girl');
+
+  // Post-reveal personalities/tones are inserted into existing databases too.
+  const personalities = await request(app)
+    .get('/api/admin/personalities')
+    .set('x-admin-password', 'test-secret');
+  assert.ok(personalities.body.some((p) => p.name === 'Tiny Ballerina'));
+  const tones = await request(app).get('/api/admin/tones').set('x-admin-password', 'test-secret');
+  assert.ok(tones.body.some((t) => t.label === 'sparkly'));
+});
+
 test('delivery-day mode: birth settings round-trip and /api/today reveal payload', async () => {
   // Invalid birth time is rejected.
   const badTime = await request(app)

@@ -65,7 +65,8 @@ Open the URL Vite prints (usually http://localhost:5173).
 Admin endpoints require the header `x-admin-password: <ADMIN_PASSWORD>`. In the UI go to
 **/admin**, enter the password (stored in `localStorage` for dev convenience). From there you can:
 
-- Edit settings (nickname, due date, timezone, personality, tone).
+- Edit settings (nickname, **baby gender** — drives Lithuanian grammar, the AI voice, and the
+  illustration character; girl 🎀 / boy 💙 / surprise 🎁 — due date, timezone, personality, tone).
 - **Set the Gemini API key + model names** (key is stored server-side and shown masked).
 - Toggle the **notifications master switch**.
 - **Generate today's card** (AI text + image when a key is set, otherwise a fallback card),

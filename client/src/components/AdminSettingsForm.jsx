@@ -13,6 +13,7 @@ function personalityOptions(personalities, current) {
 export default function AdminSettingsForm({ settings, personalities = [], onSave, saving }) {
   const [form, setForm] = useState({
     babyNickname: settings.babyNickname || '',
+    babyGender: settings.babyGender || '',
     dueDate: settings.dueDate || '',
     pregnancyStartDate: settings.pregnancyStartDate || '',
     timezone: settings.timezone || 'Europe/Vilnius',
@@ -39,6 +40,8 @@ export default function AdminSettingsForm({ settings, personalities = [], onSave
     e.preventDefault();
     const payload = {
       babyNickname: form.babyNickname,
+      // Empty string -> null (surprise) on the backend.
+      babyGender: form.babyGender || null,
       dueDate: form.dueDate,
       // Send null (not "") so the backend treats an empty start date as "unset".
       pregnancyStartDate: form.pregnancyStartDate || null,
@@ -72,6 +75,15 @@ export default function AdminSettingsForm({ settings, personalities = [], onSave
           onChange={(e) => update('babyNickname', e.target.value)}
           required
         />
+      </label>
+
+      <label className="field">
+        <span>Baby gender (drives Lithuanian grammar + AI voice)</span>
+        <select value={form.babyGender} onChange={(e) => update('babyGender', e.target.value)}>
+          <option value="">Surprise 🎁</option>
+          <option value="girl">Girl 🎀</option>
+          <option value="boy">Boy 💙</option>
+        </select>
       </label>
 
       <label className="field">

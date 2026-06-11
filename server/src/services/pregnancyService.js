@@ -21,7 +21,7 @@ export const SIZE_BY_WEEK = {
   11: { sizeLabel: 'figos', developmentFact: 'Vis labiau panašėju į tikrą kūdikį.' },
   12: { sizeLabel: 'laimo', developmentFact: 'Pradeda formuotis pirmieji refleksai.' },
   13: { sizeLabel: 'citrinos', developmentFact: 'Gali ryškėti maži pirštų atspaudai.' },
-  14: { sizeLabel: 'persiko', developmentFact: 'Tampu vis judresnis ir koordinuotas.' },
+  14: { sizeLabel: 'persiko', developmentFact: 'Mano judesiai vis vikresni ir tikslesni.' },
   15: { sizeLabel: 'obuolio', developmentFact: 'Galbūt mokausi mažų judesių.' },
   16: { sizeLabel: 'avokado', developmentFact: 'Gali ryškėti mažos veido išraiškos.' },
   17: { sizeLabel: 'kriaušės', developmentFact: 'Mokausi čiulpti nykštį.' },
@@ -44,12 +44,12 @@ export const SIZE_BY_WEEK = {
   34: { sizeLabel: 'papajos', developmentFact: 'Augu ir kaupiu jėgas mūsų susitikimui.' },
   35: { sizeLabel: 'poro', developmentFact: 'Mano rankytės jau tvirtai gniaužia.' },
   36: { sizeLabel: 'romaninių salotų', developmentFact: 'Ruošiuosi kelionei pas tave.' },
-  37: { sizeLabel: 'mažo arbūziuko', developmentFact: 'Jau beveik pasiruošęs susitikti!' },
+  37: { sizeLabel: 'mažo arbūziuko', developmentFact: 'Jau beveik metas mums susitikti!' },
   38: { sizeLabel: 'moliūgo', developmentFact: 'Kasdien vis labiau apvalėju.' },
   39: { sizeLabel: 'nedidelio arbūzo', developmentFact: 'Bet kurią dieną galiu pasibelsti!' },
   40: { sizeLabel: 'arbūzo', developmentFact: 'Laukiu mūsų susitikimo, mama.' },
-  41: { sizeLabel: 'tikro mažylio', developmentFact: 'Dar truputį pasimėgausiu jaukumu.' },
-  42: { sizeLabel: 'tikro mažylio', developmentFact: 'Jau tuoj tuoj — pažadu!' },
+  41: { sizeLabel: 'tikro kūdikio', developmentFact: 'Dar truputį pasimėgausiu jaukumu.' },
+  42: { sizeLabel: 'tikro kūdikio', developmentFact: 'Jau tuoj tuoj — pažadu!' },
 };
 
 const FALLBACK_SIZE = {

@@ -118,6 +118,24 @@ const PERSONALITY_SEED = [
   'Dad Joke Machine',
 ];
 
+// Added after the gender reveal (it's a girl 🎀). Inserted idempotently into EXISTING
+// databases too (the seed above only runs on an empty table); admins can delete any.
+const PERSONALITY_ADDITIONS = [
+  'Tiny Ballerina',
+  'Little Princess (self-appointed)',
+  'Future Girlboss',
+  'Sassy Sunshine',
+  'Curious Fairy',
+];
+
+const TONE_ADDITIONS = [
+  'sassy but sweet',
+  'graceful',
+  'sparkly',
+  'fierce but tiny',
+  'twirling with joy',
+];
+
 // Warm, funny, loving, safe tones (no scary/medical wording).
 const TONE_SEED = [
   'warm', 'funny', 'loving', 'cheeky', 'playful', 'tender', 'silly', 'witty', 'gentle', 'cozy',
@@ -154,6 +172,10 @@ function applyColumnUpgrades() {
   // Phase 3: randomize personality per card; memory timestamp (date + time, editable).
   addColumnIfMissing('settings', 'randomize_personality', 'randomize_personality INTEGER DEFAULT 1');
   addColumnIfMissing('memories', 'memory_at', 'memory_at TEXT');
+
+  // Gender reveal: 'girl' | 'boy' | NULL (= surprise). Drives Lithuanian grammar in the AI
+  // prompt (feminine/masculine self-references), the image prompt, and the fallback texts.
+  addColumnIfMissing('settings', 'baby_gender', 'baby_gender TEXT');
 
   // Phase 6: delivery-day mode (F12) — birth details set by the admin when baby arrives.
   addColumnIfMissing('settings', 'baby_arrived', 'baby_arrived INTEGER DEFAULT 0');
@@ -211,6 +233,16 @@ function seedLookups() {
     const tx = db.transaction(() => TONE_SEED.forEach((label) => insert.run(label, now)));
     tx();
   }
+
+  // Post-reveal additions go into existing databases as well; ON CONFLICT keeps it idempotent.
+  const addPersonality = db.prepare(
+    'INSERT INTO personalities (name, created_at) VALUES (?, ?) ON CONFLICT(name) DO NOTHING',
+  );
+  PERSONALITY_ADDITIONS.forEach((name) => addPersonality.run(name, now));
+  const addTone = db.prepare(
+    'INSERT INTO tones (label, created_at) VALUES (?, ?) ON CONFLICT(label) DO NOTHING',
+  );
+  TONE_ADDITIONS.forEach((label) => addTone.run(label, now));
 }
 
 export function runMigrations() {

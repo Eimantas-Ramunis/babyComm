@@ -53,6 +53,8 @@ export function updateSettings(patch) {
           ? 1
           : 0
         : current.randomize_personality,
+    // 'girl' | 'boy' | null (surprise). Empty string clears back to surprise.
+    baby_gender: patch.babyGender !== undefined ? patch.babyGender || null : current.baby_gender,
     // Delivery-day mode (F12). Empty strings clear a field; undefined leaves it unchanged.
     baby_arrived:
       patch.babyArrived !== undefined ? (patch.babyArrived ? 1 : 0) : current.baby_arrived,
@@ -79,6 +81,7 @@ export function updateSettings(patch) {
        auto_generate_enabled = @auto_generate_enabled,
        auto_generate_time = @auto_generate_time,
        randomize_personality = @randomize_personality,
+       baby_gender = @baby_gender,
        baby_arrived = @baby_arrived,
        birth_date = @birth_date,
        birth_time = @birth_time,

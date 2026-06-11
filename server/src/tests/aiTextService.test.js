@@ -86,3 +86,22 @@ test('buildPrompt falls back to the first twist when none is provided', () => {
   const prompt = buildPrompt({ week: 12, day: 0, recentMessages: [] });
   assert.ok(prompt.includes(`Funny twist for today: ${FUN_TWISTS[0]}`));
 });
+
+// ---- buildPrompt: gender ----
+
+test('buildPrompt for a girl demands feminine Lithuanian self-references', () => {
+  const prompt = buildPrompt({ week: 14, day: 0, babyGender: 'girl', recentMessages: [] });
+  assert.ok(prompt.includes("Baby's sex: GIRL"));
+  assert.ok(prompt.includes('FEMININE forms'));
+  assert.ok(prompt.includes('pasiruošusi'));
+});
+
+test('buildPrompt for a boy uses masculine; unknown avoids gendered forms', () => {
+  const boy = buildPrompt({ week: 14, day: 0, babyGender: 'boy', recentMessages: [] });
+  assert.ok(boy.includes("Baby's sex: BOY"));
+  assert.ok(boy.includes('MASCULINE forms'));
+
+  const unknown = buildPrompt({ week: 14, day: 0, recentMessages: [] });
+  assert.ok(unknown.includes('not known yet'));
+  assert.ok(unknown.includes('avoid gendered'));
+});

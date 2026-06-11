@@ -10,18 +10,20 @@ const DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 function buildImagePrompt(ctx) {
+  const character =
+    ctx.gender === 'girl' ? 'baby girl' : ctx.gender === 'boy' ? 'baby boy' : 'baby';
   return `Create a cute, wholesome, warm storybook-style illustration for a private pregnancy tracker app.
 
 Theme: Baby is approximately the size of ${ctx.sizeLabel}.
 Personality: ${ctx.personality}
-Scene: a tiny cheerful baby character represented symbolically as a ${ctx.sizeLabel}-sized little explorer having a gentle adventure.
+Scene: a tiny cheerful ${character} character represented symbolically as a ${ctx.sizeLabel}-sized little explorer having a gentle adventure.
 
 Style: soft pastel colors, cozy, funny, charming, simple composition, high quality children's book illustration, no text in image, no medical realism, no scary anatomy, no realistic fetus, no horror elements.`;
 }
 
 /**
  * Generate an illustration via Gemini. Returns { buffer, mimeType }. Throws on failure.
- * @param ctx { apiKey, model, sizeLabel, personality }
+ * @param ctx { apiKey, model, sizeLabel, personality, gender }
  */
 export async function generateImage(ctx) {
   if (!ctx.apiKey) throw new Error('No Gemini API key configured.');

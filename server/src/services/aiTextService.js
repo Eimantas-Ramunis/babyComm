@@ -64,10 +64,30 @@ export const FUN_TWISTS = [
   'a tiny pun or wordplay involving this week\'s fruit or the baby\'s current size',
 ];
 
+// Gender context + the matching Lithuanian-grammar rule. Lithuanian self-references are
+// grammatically gendered ("pasiruošusi" vs "pasiruošęs"), so this MUST be explicit.
+const GENDER_CONTEXT = {
+  girl: 'Baby\'s sex: GIRL — mom and dad know they are having a little daughter (dukrytė).',
+  boy: 'Baby\'s sex: BOY — mom and dad know they are having a little son (sūnelis).',
+  unknown: 'Baby\'s sex: not known yet (a surprise).',
+};
+
+const GENDER_RULE = {
+  girl: `- The baby is a GIRL: every Lithuanian self-reference must use FEMININE forms
+  ("pasiruošusi", "judri", "smalsi", "mažoji", "įspūdinga") — never masculine. Let a little
+  daughter-energy shine through when natural (she can be graceful AND fierce, cheeky, funny —
+  avoid reducing her to a pink stereotype).`,
+  boy: `- The baby is a BOY: every Lithuanian self-reference must use MASCULINE forms
+  ("pasiruošęs", "judrus", "smalsus", "mažasis").`,
+  unknown: `- The baby's sex is not known: phrase Lithuanian self-references to avoid gendered
+  adjective forms (use verbs/nouns instead, e.g. "augu", "mokausi", "esu mažas stebuklas").`,
+};
+
 export function buildPrompt(ctx) {
   const recent = (ctx.recentMessages || []).filter(Boolean).slice(0, 5).join('\n- ');
   const momReplies = (ctx.momReplies || []).filter(Boolean).slice(0, 5).join('\n- ');
-  return `You are generating a private pregnancy update from an unborn baby to his/her mother.
+  const gender = ctx.babyGender === 'girl' || ctx.babyGender === 'boy' ? ctx.babyGender : 'unknown';
+  return `You are generating a private pregnancy update from an unborn baby to the baby's mother.
 
 Tone:
 - Warm
@@ -80,6 +100,7 @@ Tone:
 
 Context:
 Baby nickname: ${ctx.babyNickname}
+${GENDER_CONTEXT[gender]}
 Gestational age: week ${ctx.week}, day ${ctx.day}
 Current size comparison: ${ctx.sizeLabel}
 Development fact (hint only — see rules): ${ctx.developmentFact}
@@ -113,6 +134,7 @@ Return ONLY valid JSON with this structure:
 Rules:
 - Write ALL text values (title, shortNotification, homepageMessage, mood) in LITHUANIAN.
   Use natural, warm, grammatically correct Lithuanian. Keep the JSON keys in English.
+${GENDER_RULE[gender]}
 - shortNotification max ${MAX_NOTIFICATION_CHARS} characters.
 - homepageMessage should be 3-6 sentences.
 - Weave EXACTLY ONE instance of today's funny twist naturally into homepageMessage — never

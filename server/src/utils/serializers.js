@@ -55,6 +55,7 @@ export function serializeSettings(settings) {
     autoGenerateEnabled: Boolean(settings.auto_generate_enabled),
     autoGenerateTime: settings.auto_generate_time,
     randomizePersonality: Boolean(settings.randomize_personality),
+    babyGender: settings.baby_gender,
     babyArrived: Boolean(settings.baby_arrived),
     birthDate: settings.birth_date,
     birthTime: settings.birth_time,
