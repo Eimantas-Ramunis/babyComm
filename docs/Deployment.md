@@ -135,10 +135,16 @@ changes won't appear. To force a rebuild in Portainer:
 3. **Stacks → your stack → Pull and redeploy** — compose rebuilds the now-missing image from the
    latest commit.
 
+> ⚠️ It must be **Pull and redeploy**, not **Start**. Portainer only `git pull`s on
+> *Pull and redeploy*; **Start** (and a redeploy without the re-pull option) rebuilds from the
+> repo copy cloned at the *last* pull — a fresh image of **old code**, which looks exactly like
+> "my changes didn't deploy".
+
 (The `app-data` volume persists across this, so the database + uploads are kept.)
 
 After updating, **hard-reload the PWA / clear the site's data** so the service worker picks up the
-new client bundle.
+new client bundle. To confirm the new version is live, spot-check a recently added field on a
+public endpoint (e.g. `https://<DOMAIN>/api/today`).
 
 ## Data & volumes
 
