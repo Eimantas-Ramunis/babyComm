@@ -13,7 +13,14 @@ export async function getSubscriptionState() {
   if (Notification.permission === 'denied') return 'denied';
   const reg = await navigator.serviceWorker.getRegistration();
   const sub = reg ? await reg.pushManager.getSubscription() : null;
-  if (sub) return 'subscribed';
+  if (sub) {
+    try {
+      const { publicKey } = await getVapidPublicKey();
+      return subscriptionUsesKey(sub, publicKey) ? 'subscribed' : 'default';
+    } catch {
+      return 'default';
+    }
+  }
   return 'default';
 }
 
@@ -23,6 +30,14 @@ function urlBase64ToUint8Array(base64String) {
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(base64);
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+function subscriptionUsesKey(subscription, publicKey) {
+  const existingKey = subscription.options?.applicationServerKey;
+  if (!existingKey) return false;
+  const current = new Uint8Array(existingKey);
+  const expected = urlBase64ToUint8Array(publicKey);
+  return current.length === expected.length && current.every((byte, index) => byte === expected[index]);
 }
 
 /**
@@ -48,12 +63,15 @@ export async function subscribe(deviceName) {
   console.log('[push] fetching VAPID public key…');
   const { publicKey } = await getVapidPublicKey();
 
-  const subscription =
-    (await reg.pushManager.getSubscription()) ||
-    (await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    }));
+  let subscription = await reg.pushManager.getSubscription();
+  if (subscription && !subscriptionUsesKey(subscription, publicKey)) {
+    await subscription.unsubscribe();
+    subscription = null;
+  }
+  subscription ||= await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
+  });
   console.log('[push] subscription obtained, registering with server…');
 
   await registerPush({
