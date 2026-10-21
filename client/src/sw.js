@@ -43,7 +43,7 @@ self.addEventListener('push', (event) => {
 
 // Browsers rotate push subscriptions (key/endpoint expiry). Without this handler the device
 // silently stops receiving until someone manually re-subscribes — so re-subscribe with the
-// same VAPID key and register the fresh subscription with the server automatically.
+// server's current VAPID key and register the fresh subscription automatically.
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -54,15 +54,12 @@ function urlBase64ToUint8Array(base64String) {
 self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil(
     (async () => {
-      let applicationServerKey = event.oldSubscription?.options?.applicationServerKey;
-      if (!applicationServerKey) {
-        const res = await fetch('/api/push/vapid-public-key');
-        const { publicKey } = await res.json();
-        applicationServerKey = urlBase64ToUint8Array(publicKey);
-      }
+      const res = await fetch('/api/push/vapid-public-key');
+      if (!res.ok) throw new Error('Could not fetch the current VAPID key.');
+      const { publicKey } = await res.json();
       const subscription = await self.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
       await fetch('/api/push/register', {
         method: 'POST',
